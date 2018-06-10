@@ -54,7 +54,44 @@ void ImageEditor::setReferenceOne(ImageContainer *ref_one)
     m_reference_one->setImageSource(ref_one->getImagePath().toString());
 }
 
+/**
+ * @brief ImageEditor::setReferenceTwo
+ * A public method for setting the second preview pane.
+ * @param ref_two
+ */
 void ImageEditor::setReferenceTwo(ImageContainer *ref_two)
 {
     m_reference_two->setImageSource(ref_two->getImagePath().toString());
+}
+
+/**
+ * @brief ImageEditor::attemptToSetReference
+ * When double-click is invoked in the database preview,
+ * attempt to transfer that image container to a preview
+ * success if one reference has not yet been set.
+ * @param img
+ */
+void ImageEditor::attemptToSetReferenceByDoubleClick(ImageContainer *img)
+{
+    if(!m_reference_one->hasImage()) {
+        setReferenceOne(img);
+    } else if(!m_reference_two->hasImage()) {
+        setReferenceTwo(img);
+    }
+}
+
+/**
+ * @brief ImageEditor::attemptToSetReference
+ * Received a set reference signal with an image and a reference number
+ * will attempt to set the reference accordingly.
+ * @param img
+ * @param number
+ */
+void ImageEditor::attemptToSetReference(ImageContainer *img, int number)
+{
+    if(number == 1) {
+        setReferenceOne(img);
+    } else if (number == 2) {
+        setReferenceTwo(img);
+    }
 }

@@ -1,6 +1,8 @@
 #include "imagecontainer.h"
 
+#include <QDebug>
 #include <QRegExp>
+#include <QMouseEvent>
 
 /**
  * @brief ImageContainer::ImageContainer
@@ -8,11 +10,30 @@
  * @param parent
  */
 ImageContainer::ImageContainer(QWidget *parent) : QLabel(parent),
-    m_source(std::make_unique<QImage>(nullptr))
+    m_source(std::make_unique<QImage>(nullptr)),
+    m_contains_image(false)
 {
     setScaledContents(true);
     setFrameShape(QFrame::Box);
     setLineWidth(1);
+}
+
+/**
+ * @brief ImageContainer::mouseDoubleClickEvent
+ * @param event
+ */
+void ImageContainer::mouseDoubleClickEvent(QMouseEvent *)
+{
+    emit doubleClickDetected(this);
+}
+
+/**
+ * @brief ImageContainer::mousePressEvent
+ */
+void ImageContainer::mousePressEvent(QMouseEvent *event)
+{
+    if(event->button() == Qt::RightButton)
+        emit mousePressDetected(this, event);
 }
 
 /**
@@ -36,6 +57,7 @@ bool ImageContainer::setImageSource(const QString &path)
 {
     auto loaded = m_source->load(path);
     if(!loaded) return false;
+    m_contains_image = true;
     m_img_path = path;
     m_img_title = m_img_path.toString();
     m_img_title.replace(QRegExp("(.jpg)|(.png)|(.jpeg)"),"");
@@ -70,4 +92,13 @@ QUrl ImageContainer::getImagePath()
 QString ImageContainer::getImageTitle()
 {
     return m_img_title;
+}
+
+/**
+ * @brief ImageContainer::hasImage
+ * @return
+ */
+bool ImageContainer::hasImage()
+{
+   return m_contains_image;
 }

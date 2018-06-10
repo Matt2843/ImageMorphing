@@ -58,7 +58,11 @@ void MainWindow::setup()
  */
 void MainWindow::setupConnections()
 {
+    connect(m_database_preview.get(), SIGNAL(imageDoubleClicked(ImageContainer*)),
+            m_image_editor.get(), SLOT(attemptToSetReferenceByDoubleClick(ImageContainer*)));
 
+    connect(m_database_preview.get(), SIGNAL(referenceImageRequest(ImageContainer*,int)),
+            m_image_editor.get(), SLOT(attemptToSetReference(ImageContainer*,int)));
 }
 
 /**

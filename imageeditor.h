@@ -14,15 +14,19 @@ class ImageEditor : public QGroupBox {
     Q_OBJECT
 
 public:
-    explicit ImageEditor(QWidget * parent = nullptr);
+    explicit ImageEditor(QWidget *parent = nullptr);
     ~ImageEditor() = default;
 
 private:
     void setup();
 
 public:
-    void setReferenceOne(ImageContainer * ref_one);
-    void setReferenceTwo(ImageContainer * ref_two);
+    void setReferenceOne(ImageContainer *ref_one);
+    void setReferenceTwo(ImageContainer *ref_two);
+
+public slots:
+    void attemptToSetReferenceByDoubleClick(ImageContainer *img);
+    void attemptToSetReference(ImageContainer *img, int number);
 
 private:
     std::unique_ptr<QVBoxLayout> m_layout;

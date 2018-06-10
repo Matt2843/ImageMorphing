@@ -1,8 +1,13 @@
 #include "databasepreview.h"
 
 #include <QString>
+#include <QDebug>
 #include <QFileDialog>
 #include <QDirIterator>
+#include <QApplication>
+
+#include <QMenu>
+#include <QAction>
 
 /**
  * @brief DatabasePreview::DatabasePreview
@@ -62,9 +67,40 @@ bool DatabasePreview::loadDatabase(const QStringList &image_file_paths)
 {
     for(const QString & path : image_file_paths) {
         std::unique_ptr<ImageContainer> image = std::make_unique<ImageContainer>(nullptr);
-        image->resize(m_content_pane->geometry().width(), m_content_pane->geometry().height() / 8);
+        image->resize(m_content_pane->geometry().width(), m_content_pane->geometry().height() / 5);
         if(!image->setImageSource(path)) return false;
+
+        connect(image.get(), SIGNAL(doubleClickDetected(ImageContainer*)),
+                this, SIGNAL(imageDoubleClicked(ImageContainer*)));
+        connect(image.get(), SIGNAL(mousePressDetected(ImageContainer*, QMouseEvent*)),
+                this, SLOT(imageRightClickInvoked(ImageContainer*, QMouseEvent*)));
+
         m_container.insert(std::move(image));
     }
     return true;
+}
+
+/**
+ * @brief DatabasePreview::imageRightClickInvoked
+ * @param img
+ * @param event
+ */
+void DatabasePreview::imageRightClickInvoked(ImageContainer *img, QMouseEvent *event)
+{
+    //TODO: create a menu at the cursor loc. (event->globalPos())
+    QMenu *popup = new QMenu(this);
+
+    QAction *refOneAction = new QAction("Set as Reference One", this);
+    QAction *refTwoAction = new QAction("Set as Reference Two", this);
+
+    popup->addAction(refOneAction);
+    popup->addAction(refTwoAction);
+
+    QAction *action = popup->exec(event->globalPos());
+
+    if(action == refOneAction) {
+        emit referenceImageRequest(img, 1);
+    } else if(action == refTwoAction) {
+        emit referenceImageRequest(img, 2);
+    }
 }
