@@ -7,16 +7,16 @@
  */
 ImageEditor::ImageEditor(QWidget *parent) :
     QGroupBox("Image Editor", parent),
-    m_layout(std::make_unique<QVBoxLayout>(nullptr)),
-    m_reference_one(std::make_unique<ImageContainer>(nullptr)),
-    m_reference_two(std::make_unique<ImageContainer>(nullptr)),
-    m_target(std::make_unique<ImageContainer>(nullptr)),
-    m_containers_layout(std::make_unique<QHBoxLayout>(nullptr)),
-    m_label_layout(std::make_unique<QHBoxLayout>(nullptr)),
-    m_ref_one_label(std::make_unique<QLabel>("Reference One:")),
-    m_target_label(std::make_unique<QLabel>("Target:")),
-    m_ref_two_label(std::make_unique<QLabel>("Reference Two:")),
-    m_editor_pane(std::make_unique<EditorPane>(nullptr))
+    m_layout(new QVBoxLayout()),
+    m_reference_one(new ImageContainer(this)),
+    m_reference_two(new ImageContainer(this)),
+    m_target(new ImageContainer(this)),
+    m_containers_layout(new QHBoxLayout()),
+    m_label_layout(new QHBoxLayout()),
+    m_ref_one_label(new QLabel("Reference One:", this)),
+    m_target_label(new QLabel("Target:", this)),
+    m_ref_two_label(new QLabel("Reference Two:", this)),
+    m_editor_pane(new EditorPane(this))
 {
     setup();
 }
@@ -28,20 +28,20 @@ ImageEditor::ImageEditor(QWidget *parent) :
  */
 void ImageEditor::setup()
 {
-    setLayout(m_layout.get());
+    setLayout(m_layout);
 
-    m_label_layout->addWidget(m_ref_one_label.get());
-    m_label_layout->addWidget(m_target_label.get());
-    m_label_layout->addWidget(m_ref_two_label.get());
+    m_label_layout->addWidget(m_ref_one_label);
+    m_label_layout->addWidget(m_target_label);
+    m_label_layout->addWidget(m_ref_two_label);
 
-    m_layout->addLayout(m_label_layout.get(), 1);
+    m_layout->addLayout(m_label_layout, 1);
 
-    m_containers_layout->addWidget(m_reference_one.get());
-    m_containers_layout->addWidget(m_target.get());
-    m_containers_layout->addWidget(m_reference_two.get());
+    m_containers_layout->addWidget(m_reference_one);
+    m_containers_layout->addWidget(m_target);
+    m_containers_layout->addWidget(m_reference_two);
 
-    m_layout->addLayout(m_containers_layout.get(), 14);
-    m_layout->addWidget(m_editor_pane.get(), 9);
+    m_layout->addLayout(m_containers_layout, 14);
+    m_layout->addWidget(m_editor_pane, 9);
 }
 
 /**

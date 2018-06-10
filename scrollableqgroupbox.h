@@ -3,7 +3,6 @@
 
 #include "imagecontainer.h"
 
-#include <memory>
 #include <unordered_set>
 
 #include <QString>
@@ -29,10 +28,10 @@ protected:
     void clearContainerAndPreview();
 
 protected:
-    std::unique_ptr<QWidget> m_content_pane;
-    std::unique_ptr<QScrollArea> m_scroll_area;
-    std::unique_ptr<QVBoxLayout> m_layout;
-    std::unique_ptr<QLayout> m_content_pane_layout;
+    QWidget *m_content_pane;
+    QScrollArea *m_scroll_area;
+    QVBoxLayout *m_layout;
+    QLayout *m_content_pane_layout;
 
-    std::unordered_set<std::unique_ptr<ImageContainer>> m_container;
+    std::unordered_set<ImageContainer*> m_container;
 };

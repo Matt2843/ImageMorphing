@@ -10,7 +10,6 @@
  * @param parent
  */
 ImageContainer::ImageContainer(QWidget *parent) : QLabel(parent),
-    m_source(std::make_unique<QImage>(nullptr)),
     m_contains_image(false)
 {
     setScaledContents(true);
@@ -55,15 +54,15 @@ void ImageContainer::updatePixmap(QImage *image)
  */
 bool ImageContainer::setImageSource(const QString &path)
 {
-    auto loaded = m_source->load(path);
+    auto loaded = m_source.load(path);
     if(!loaded) return false;
     m_contains_image = true;
     m_img_path = path;
     m_img_title = m_img_path.toString();
     m_img_title.replace(QRegExp("(.jpg)|(.png)|(.jpeg)"),"");
     m_img_title.replace(QRegExp(".*/"),"");
-    setPixmap(QPixmap::fromImage(*m_source));
-    emit sourceChanged(m_source.get());
+    setPixmap(QPixmap::fromImage(m_source));
+    emit sourceChanged(&m_source);
     return true;
 }
 
@@ -73,7 +72,7 @@ bool ImageContainer::setImageSource(const QString &path)
  */
 QImage * ImageContainer::getSource()
 {
-    return m_source.get();
+    return &m_source;
 }
 
 /**

@@ -2,8 +2,6 @@
 
 #include <QLabel>
 
-#include <memory>
-
 #include <QUrl>
 #include <QImage>
 #include <QString>
@@ -36,6 +34,6 @@ public:
 private:
     QUrl m_img_path;
     QString m_img_title;
-    std::unique_ptr<QImage> m_source;
+    QImage m_source;
     bool m_contains_image;
 };

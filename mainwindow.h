@@ -7,8 +7,6 @@
 #include "editorpane.h"
 #include "resultspreview.h"
 
-#include <memory>
-
 #include <QMenu>
 #include <QAction>
 #include <QWidget>
@@ -50,17 +48,15 @@ private:
     QAction *a_createAutoScript;
     QAction *a_about;
 
-
+private:
+    QWidget *m_content_pane;
+    QHBoxLayout *m_layout;
+    QVBoxLayout *m_second_layout;
 
 private:
-    std::unique_ptr<QWidget> m_content_pane;
-    std::unique_ptr<QHBoxLayout> m_layout;
-    std::unique_ptr<QVBoxLayout> m_second_layout;
-
-private:
-    std::unique_ptr<DatabasePreview> m_database_preview;
-    std::unique_ptr<ImageEditor> m_image_editor;
-    std::unique_ptr<ResultsPreview> m_results_preview;
+    DatabasePreview *m_database_preview;
+    ImageEditor *m_image_editor;
+    ResultsPreview *m_results_preview;
 
 private:
     QMenu *file_menu;

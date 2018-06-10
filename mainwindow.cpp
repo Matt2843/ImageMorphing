@@ -14,12 +14,12 @@
  */
 MainWindow::MainWindow(QMainWindow *parent) :
     QMainWindow(parent),
-    m_content_pane(std::make_unique<QWidget>(nullptr)),
-    m_layout(std::make_unique<QHBoxLayout>(nullptr)),
-    m_second_layout(std::make_unique<QVBoxLayout>(nullptr)),
-    m_database_preview(std::make_unique<DatabasePreview>()),
-    m_image_editor(std::make_unique<ImageEditor>()),
-    m_results_preview(std::make_unique<ResultsPreview>())
+    m_content_pane(new QWidget(this)),
+    m_layout(new QHBoxLayout()),
+    m_second_layout(new QVBoxLayout()),
+    m_database_preview(new DatabasePreview(this)),
+    m_image_editor(new ImageEditor(this)),
+    m_results_preview(new ResultsPreview(this))
 {
     createActions();
     createMenus();
@@ -38,17 +38,17 @@ void MainWindow::setup()
     // make this relative.
     resize(screen->geometry().width() * 0.7, screen->geometry().height() * 0.7);
     // set central widget and initialize the layout.
-    setCentralWidget(m_content_pane.get());
-    m_content_pane->setLayout(m_layout.get());
+    setCentralWidget(m_content_pane);
+    m_content_pane->setLayout(m_layout);
 
     // Add the database preview
-    m_layout->addWidget(m_database_preview.get(), 1);
+    m_layout->addWidget(m_database_preview, 1);
 
     // Add the editor and results preview
-    m_second_layout->addWidget(m_image_editor.get(), 3);
-    m_second_layout->addWidget(m_results_preview.get(), 1);
+    m_second_layout->addWidget(m_image_editor, 3);
+    m_second_layout->addWidget(m_results_preview, 1);
 
-    m_layout->addLayout(m_second_layout.get(), 3);
+    m_layout->addLayout(m_second_layout, 3);
 }
 
 /**
@@ -58,11 +58,11 @@ void MainWindow::setup()
  */
 void MainWindow::setupConnections()
 {
-    connect(m_database_preview.get(), SIGNAL(imageDoubleClicked(ImageContainer*)),
-            m_image_editor.get(), SLOT(attemptToSetReferenceByDoubleClick(ImageContainer*)));
+    connect(m_database_preview, SIGNAL(imageDoubleClicked(ImageContainer*)),
+            m_image_editor, SLOT(attemptToSetReferenceByDoubleClick(ImageContainer*)));
 
-    connect(m_database_preview.get(), SIGNAL(referenceImageRequest(ImageContainer*,int)),
-            m_image_editor.get(), SLOT(attemptToSetReference(ImageContainer*,int)));
+    connect(m_database_preview, SIGNAL(referenceImageRequest(ImageContainer*,int)),
+            m_image_editor, SLOT(attemptToSetReference(ImageContainer*,int)));
 }
 
 /**

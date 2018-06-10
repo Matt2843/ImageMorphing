@@ -10,9 +10,9 @@
  */
 ScrollableQGroupBox::ScrollableQGroupBox(QWidget *parent, const QString &title, Orientation Orientation) :
     QGroupBox(title, parent),
-    m_content_pane(std::make_unique<QWidget>(nullptr)),
-    m_scroll_area(std::make_unique<QScrollArea>(nullptr)),
-    m_layout(std::make_unique<QVBoxLayout>(nullptr))
+    m_content_pane(new QWidget(this)),
+    m_scroll_area(new QScrollArea(this)),
+    m_layout(new QVBoxLayout())
 {
     setup(Orientation);
 }
@@ -25,13 +25,13 @@ ScrollableQGroupBox::ScrollableQGroupBox(QWidget *parent, const QString &title, 
 void ScrollableQGroupBox::setup(Orientation orientation)
 {
     if(orientation == Orientation::Vertical)
-        m_content_pane_layout = std::make_unique<QVBoxLayout>(nullptr);
-    else m_content_pane_layout = std::make_unique<QHBoxLayout>(nullptr);
-    m_content_pane->setLayout(m_content_pane_layout.get());
-    m_scroll_area->setWidget(m_content_pane.get());
+        m_content_pane_layout = new QVBoxLayout();
+    else m_content_pane_layout = new QHBoxLayout();
+    m_content_pane->setLayout(m_content_pane_layout);
+    m_scroll_area->setWidget(m_content_pane);
     m_scroll_area->setWidgetResizable(true);
-    m_layout->addWidget(m_scroll_area.get());
-    setLayout(m_layout.get());
+    m_layout->addWidget(m_scroll_area);
+    setLayout(m_layout);
 }
 
 /**
@@ -42,7 +42,7 @@ void ScrollableQGroupBox::setup(Orientation orientation)
 void ScrollableQGroupBox::updatePreview()
 {
     for(const auto & data_point : m_container) {
-        m_content_pane_layout->addWidget(data_point.get());
+        m_content_pane_layout->addWidget(data_point);
     }
 }
 
@@ -54,7 +54,7 @@ void ScrollableQGroupBox::updatePreview()
 void ScrollableQGroupBox::clearContainerAndPreview()
 {
     for(const auto & data_point : m_container) {
-        m_content_pane_layout->removeWidget(data_point.get());
+        m_content_pane_layout->removeWidget(data_point);
     }
     m_container.clear();
 }

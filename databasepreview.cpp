@@ -13,7 +13,8 @@
  * @brief DatabasePreview::DatabasePreview
  * The default DatabasePreview constructor
  */
-DatabasePreview::DatabasePreview() : ScrollableQGroupBox(nullptr, "Database Preview") {}
+DatabasePreview::DatabasePreview(QWidget * parent) :
+    ScrollableQGroupBox(parent, "Database Preview") {}
 
 /**
  * @brief DatabasePreview::loadDatabaseFromFiles
@@ -66,16 +67,16 @@ bool DatabasePreview::loadDatabaseFromDirectory()
 bool DatabasePreview::loadDatabase(const QStringList &image_file_paths)
 {
     for(const QString & path : image_file_paths) {
-        std::unique_ptr<ImageContainer> image = std::make_unique<ImageContainer>(nullptr);
+        ImageContainer *image = new ImageContainer(this);
         image->resize(m_content_pane->geometry().width(), m_content_pane->geometry().height() / 5);
         if(!image->setImageSource(path)) return false;
 
-        connect(image.get(), SIGNAL(doubleClickDetected(ImageContainer*)),
+        connect(image, SIGNAL(doubleClickDetected(ImageContainer*)),
                 this, SIGNAL(imageDoubleClicked(ImageContainer*)));
-        connect(image.get(), SIGNAL(mousePressDetected(ImageContainer*, QMouseEvent*)),
+        connect(image, SIGNAL(mousePressDetected(ImageContainer*, QMouseEvent*)),
                 this, SLOT(imageRightClickInvoked(ImageContainer*, QMouseEvent*)));
 
-        m_container.insert(std::move(image));
+        m_container.insert(image);
     }
     return true;
 }

@@ -5,6 +5,6 @@ class ResultsPreview : public ScrollableQGroupBox {
     Q_OBJECT
 
 public:
-    explicit ResultsPreview();
+    explicit ResultsPreview(QWidget * parent = nullptr);
 
 };

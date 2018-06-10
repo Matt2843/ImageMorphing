@@ -9,7 +9,7 @@ class DatabasePreview : public ScrollableQGroupBox {
     Q_OBJECT
 
 public:
-    explicit DatabasePreview();
+    explicit DatabasePreview(QWidget * parent = nullptr);
 
 signals:
     void imageDoubleClicked(ImageContainer *img);

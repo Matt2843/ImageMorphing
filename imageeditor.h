@@ -4,8 +4,6 @@
 #include "imagecontainer.h"
 #include "editorpane.h"
 
-#include <memory>
-
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -29,18 +27,18 @@ public slots:
     void attemptToSetReference(ImageContainer *img, int number);
 
 private:
-    std::unique_ptr<QVBoxLayout> m_layout;
+    QVBoxLayout *m_layout;
 
-    std::unique_ptr<ImageContainer> m_reference_one;
-    std::unique_ptr<ImageContainer> m_reference_two;
-    std::unique_ptr<ImageContainer> m_target;
+    ImageContainer *m_reference_one;
+    ImageContainer *m_reference_two;
+    ImageContainer *m_target;
 
-    std::unique_ptr<QHBoxLayout> m_containers_layout;
-    std::unique_ptr<QHBoxLayout> m_label_layout;
+    QHBoxLayout *m_containers_layout;
+    QHBoxLayout *m_label_layout;
 
-    std::unique_ptr<QLabel> m_ref_one_label;
-    std::unique_ptr<QLabel> m_target_label;
-    std::unique_ptr<QLabel> m_ref_two_label;
+    QLabel *m_ref_one_label;
+    QLabel *m_target_label;
+    QLabel *m_ref_two_label;
 
-    std::unique_ptr<EditorPane> m_editor_pane;
+    EditorPane *m_editor_pane;
 };
