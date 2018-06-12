@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QMenuBar>
 #include <QScreen>
+#include <QApplication>
 #include <QGuiApplication>
 
 /**
@@ -96,9 +97,10 @@ void MainWindow::createActions()
     a_exit->setStatusTip("Exit");
     connect(a_exit, &QAction::triggered, this, &MainWindow::exit);
 
-    a_createAutoScript = new QAction(tr("Create Script"), this);
-    a_createAutoScript->setStatusTip("Automate the morphing process");
-    connect(a_createAutoScript, &QAction::triggered, this, &MainWindow::createAutoScript);
+    a_generateMorphDatabase = new QAction(tr("Generate Morp-Database"), this);
+    a_generateMorphDatabase->setStatusTip("Automate the morphing process");
+    a_generateMorphDatabase->setEnabled(false);
+    connect(a_generateMorphDatabase, &QAction::triggered, this, &MainWindow::generateMorphDatabase);
 
     a_about = new QAction(tr("About"), this);
     connect(a_about, &QAction::triggered, this, &MainWindow::about);
@@ -116,8 +118,8 @@ void MainWindow::createMenus()
     file_menu->addSeparator();
     file_menu->addAction(a_exit);
 
-    edit_menu = menuBar()->addMenu(tr("&Edit"));
-    edit_menu->addAction(a_createAutoScript);
+    edit_menu = menuBar()->addMenu(tr("&Tools"));
+    edit_menu->addAction(a_generateMorphDatabase);
 
     help_menu = menuBar()->addMenu(tr("&Help"));
     help_menu->addAction(a_about);
@@ -148,11 +150,12 @@ void MainWindow::exportResults()
 void MainWindow::exit()
 {
     qDebug() << "exit pressed";
+    QApplication::instance()->quit();
 }
 
-void MainWindow::createAutoScript()
+void MainWindow::generateMorphDatabase()
 {
-    qDebug() << "create script pressed";
+    qDebug() << "generate morph database pressed";
 }
 
 void MainWindow::about()

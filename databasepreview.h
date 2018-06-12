@@ -24,4 +24,8 @@ private:
 
 private slots:
     void imageRightClickInvoked(ImageContainer *img, QMouseEvent *event);
+
+public:
+    static int m_image_width;
+    static int m_image_height;
 };

@@ -28,18 +28,27 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    databasepreview.cpp \
-    imagecontainer.cpp \
-    imageeditor.cpp \
-    scrollableqgroupbox.cpp \
-    resultspreview.cpp \
-    editorpane.cpp
+        databasepreview.cpp \
+        imagecontainer.cpp \
+        imageeditor.cpp \
+        scrollableqgroupbox.cpp \
+        resultspreview.cpp \
+        editorpane.cpp \
+        imageprocessor.cpp
 
 HEADERS += \
         mainwindow.h \
-    databasepreview.h \
-    imagecontainer.h \
-    imageeditor.h \
-    scrollableqgroupbox.h \
-    resultspreview.h \
-    editorpane.h
+        databasepreview.h \
+        imagecontainer.h \
+        imageeditor.h \
+        scrollableqgroupbox.h \
+        resultspreview.h \
+        editorpane.h \
+        imageprocessor.h
+
+INCLUDEPATH += \
+        $$PWD/dlib_build/include
+
+LIBS += \
+        -L$$PWD/dlib_build/lib \
+        -ldlib

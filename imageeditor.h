@@ -1,12 +1,15 @@
 #pragma once
 #include <QGroupBox>
 
-#include "imagecontainer.h"
 #include "editorpane.h"
+#include "imagecontainer.h"
+
+#include <string>
 
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QPushButton>
 
 class ImageEditor : public QGroupBox {
     Q_OBJECT
@@ -17,6 +20,13 @@ public:
 
 private:
     void setup();
+    void setupConnections();
+
+private slots:
+    void detectLandmarksRefOne();
+    void detectLandmarksRefTwo();
+    void toggleLandmarksRefOne();
+    void toggleLandmarksRefTwo();
 
 public:
     void setReferenceOne(ImageContainer *ref_one);
@@ -33,8 +43,20 @@ private:
     ImageContainer *m_reference_two;
     ImageContainer *m_target;
 
+    QHBoxLayout *m_ref_one_buttons;
+    QHBoxLayout *m_ref_two_buttons;
+
+    QVBoxLayout *m_reference_one_group;
+    QVBoxLayout *m_reference_two_group;
+    QVBoxLayout *m_target_group;
+
+    QPushButton *m_ref_one_detect_facial_landmarks_b;
+    QPushButton *m_ref_one_toggle_facial_landmarks_b;
+    QPushButton *m_ref_two_detect_facial_landmarks_b;
+    QPushButton *m_ref_two_toggle_facial_landmarks_b;
+    QPushButton *m_morph_target_b;
+
     QHBoxLayout *m_containers_layout;
-    QHBoxLayout *m_label_layout;
 
     QLabel *m_ref_one_label;
     QLabel *m_target_label;

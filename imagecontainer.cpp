@@ -1,15 +1,21 @@
 #include "imagecontainer.h"
 
+#include "databasepreview.h"
+
 #include <QDebug>
 #include <QRegExp>
 #include <QMouseEvent>
+
+#include <QPainter>
+#include <QPen>
 
 /**
  * @brief ImageContainer::ImageContainer
  * The default ImageContainer constructor
  * @param parent
  */
-ImageContainer::ImageContainer(QWidget *parent) : QLabel(parent),
+ImageContainer::ImageContainer(QWidget *parent) :
+    QLabel(parent),
     m_contains_image(false)
 {
     setScaledContents(true);
@@ -47,6 +53,23 @@ void ImageContainer::updatePixmap(QImage *image)
 }
 
 /**
+ * @brief ImageContainer::update
+ * @param other
+ */
+void ImageContainer::update(ImageContainer *other)
+{
+    m_img_path = other->m_img_path;
+    m_img_title = other->m_img_title;
+    m_source = other->m_source;
+    m_contains_image = other->m_contains_image;
+    m_landmark_image = other->m_landmark_image;
+    m_landmarks = other->m_landmarks;
+    m_isDisplayingLandmarks = other->m_isDisplayingLandmarks;
+    qDebug() << m_source.size();
+    updatePixmap(&m_source);
+}
+
+/**
  * @brief ImageContainer::setImageSource
  * Set the pixmap of this container to the image in the input path.
  * @param path
@@ -56,6 +79,7 @@ bool ImageContainer::setImageSource(const QString &path)
 {
     auto loaded = m_source.load(path);
     if(!loaded) return false;
+    m_source = m_source.scaled(DatabasePreview::m_image_width, DatabasePreview::m_image_height);
     m_contains_image = true;
     m_img_path = path;
     m_img_title = m_img_path.toString();
@@ -100,4 +124,90 @@ QString ImageContainer::getImageTitle()
 bool ImageContainer::hasImage()
 {
    return m_contains_image;
+}
+
+/**
+ * @brief ImageContainer::getLandmarks
+ * @return
+ */
+std::vector<QPoint> ImageContainer::getLandmarks()
+{
+    return m_landmarks;
+}
+
+/**
+ * @brief ImageContainer::setLandmarks
+ * @param landmarks
+ */
+void ImageContainer::setLandmarks(const std::vector<QPoint> &landmarks)
+{
+    m_landmarks = landmarks;
+
+    // manually add corner points
+    m_landmarks.push_back(QPoint(0, 0)); // top-left
+    m_landmarks.push_back(QPoint(m_source.width(), 0)); // top-right
+    m_landmarks.push_back(QPoint(0, m_source.height())); // bot-left
+    m_landmarks.push_back(QPoint(m_source.width(), m_source.height())); // bot-right
+
+    // manually add midpoints
+    m_landmarks.push_back(QPoint(0, m_source.height() / 2)); // mid-left
+    m_landmarks.push_back(QPoint(m_source.width() / 2, 0)); // mid-top
+    m_landmarks.push_back(QPoint(m_source.width(), m_source.height() / 2)); // mid-right
+    m_landmarks.push_back(QPoint(m_source.width() / 2, m_source.height())); // mid-bot
+
+    generateLandmarkImage();
+}
+
+/**
+ * @brief ImageContainer::hasLandmarks
+ * @return
+ */
+bool ImageContainer::hasLandmarks()
+{
+    return !m_landmarks.empty();
+}
+
+/**
+ * @brief ImageContainer::toggleLandmarks
+ */
+void ImageContainer::toggleLandmarks()
+{
+    if(m_isDisplayingLandmarks) {
+        displayOriginal();
+    } else {
+        displayLandmarks();
+    }
+}
+
+/**
+ * @brief ImageContainer::generateLandmarkImage
+ */
+void ImageContainer::generateLandmarkImage()
+{
+    QImage res(m_source.size(), QImage::Format_ARGB32);
+    QPainter painter(&res);
+    QPen pen;
+    pen.setColor("#d8d788");
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setWidth(4);
+    painter.setPen(pen);
+    painter.drawImage(QRect(0, 0, res.width(), res.height()), m_source, QRect(0, 0, res.width(), res.height()));
+    for(const QPoint & landmark : m_landmarks) {
+        painter.drawPoint(landmark.x(), landmark.y());
+    }
+    m_landmark_image = res;
+}
+
+void ImageContainer::displayOriginal()
+{
+    if(m_source.isNull()) return;
+    setPixmap(QPixmap::fromImage(m_source));
+    m_isDisplayingLandmarks = false;
+}
+
+void ImageContainer::displayLandmarks()
+{
+    if(m_landmark_image.isNull()) return;
+    setPixmap(QPixmap::fromImage(m_landmark_image));
+    m_isDisplayingLandmarks = true;
 }

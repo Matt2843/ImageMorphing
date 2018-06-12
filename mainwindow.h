@@ -35,7 +35,7 @@ private slots:
     void exportResults();
     void exit();
 
-    void createAutoScript();
+    void generateMorphDatabase();
 
     void about();
 
@@ -45,7 +45,7 @@ private:
     QAction *a_loadDatabaseFromFiles;
     QAction *a_exportResults;
     QAction *a_exit;
-    QAction *a_createAutoScript;
+    QAction *a_generateMorphDatabase;
     QAction *a_about;
 
 private:
