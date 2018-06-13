@@ -65,7 +65,6 @@ void ImageContainer::update(ImageContainer *other)
     m_landmark_image = other->m_landmark_image;
     m_landmarks = other->m_landmarks;
     m_isDisplayingLandmarks = other->m_isDisplayingLandmarks;
-    qDebug() << m_source.size();
     updatePixmap(&m_source);
 }
 
@@ -88,6 +87,17 @@ bool ImageContainer::setImageSource(const QString &path)
     setPixmap(QPixmap::fromImage(m_source));
     emit sourceChanged(&m_source);
     return true;
+}
+
+/**
+ * @brief ImageContainer::setImageSource
+ * @param source
+ */
+void ImageContainer::setImageSource(const QImage &source)
+{
+    m_source = source;
+    setPixmap(QPixmap::fromImage(source));
+    emit sourceChanged(&m_source);
 }
 
 /**
@@ -145,15 +155,15 @@ void ImageContainer::setLandmarks(const std::vector<QPoint> &landmarks)
 
     // manually add corner points
     m_landmarks.push_back(QPoint(0, 0)); // top-left
-    m_landmarks.push_back(QPoint(m_source.width(), 0)); // top-right
-    m_landmarks.push_back(QPoint(0, m_source.height())); // bot-left
-    m_landmarks.push_back(QPoint(m_source.width(), m_source.height())); // bot-right
+    m_landmarks.push_back(QPoint(m_source.width() - 1, 0)); // top-right
+    m_landmarks.push_back(QPoint(0, m_source.height() - 1)); // bot-left
+    m_landmarks.push_back(QPoint(m_source.width() - 1, m_source.height() - 1)); // bot-right
 
     // manually add midpoints
     m_landmarks.push_back(QPoint(0, m_source.height() / 2)); // mid-left
     m_landmarks.push_back(QPoint(m_source.width() / 2, 0)); // mid-top
-    m_landmarks.push_back(QPoint(m_source.width(), m_source.height() / 2)); // mid-right
-    m_landmarks.push_back(QPoint(m_source.width() / 2, m_source.height())); // mid-bot
+    m_landmarks.push_back(QPoint(m_source.width() - 1, m_source.height() / 2)); // mid-right
+    m_landmarks.push_back(QPoint(m_source.width() / 2, m_source.height() - 1)); // mid-bot
 
     generateLandmarkImage();
 }

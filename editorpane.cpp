@@ -39,6 +39,11 @@ void EditorPane::setupConnections()
 
 }
 
+/**
+ * @brief EditorPane::detectLandmarks
+ * @param img
+ * @return
+ */
 bool EditorPane::detectLandmarks(ImageContainer *img)
 {
     if(img->hasLandmarks()) return false;
@@ -53,7 +58,8 @@ bool EditorPane::detectLandmarks(ImageContainer *img)
  */
 void EditorPane::m_morph_target_b_pressed()
 {
-    qDebug() << "Morph pressed";
+    qDebug() << "Morph pressed handle the returned morphed image.";
+    m_image_processor->morphImages(m_reference_one, m_reference_two, m_target, 0.5);
 }
 
 

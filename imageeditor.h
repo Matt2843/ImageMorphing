@@ -23,6 +23,7 @@ private:
     void setupConnections();
 
 private slots:
+    void morphPressed();
     void detectLandmarksRefOne();
     void detectLandmarksRefTwo();
     void toggleLandmarksRefOne();

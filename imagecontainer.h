@@ -29,7 +29,8 @@ public slots:
 
 public:
     void update(ImageContainer * other);
-    bool setImageSource(const QString & path);
+    bool setImageSource(const QString &path);
+    void setImageSource(const QImage &source);
     QImage * getSource();
     QUrl getImagePath();
     QString getImageTitle();

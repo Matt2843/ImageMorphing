@@ -3,9 +3,6 @@
 #include <QDebug>
 #include <QPainter>
 
-
-
-
 /**
  * @brief ImageEditor::ImageEditor
  * The default ImageEditor constructor
@@ -46,7 +43,6 @@ void ImageEditor::setup()
 {
     setLayout(m_layout);
 
-    m_morph_target_b->setEnabled(false);
     m_ref_one_detect_facial_landmarks_b->setEnabled(false);
     m_ref_two_detect_facial_landmarks_b->setEnabled(false);
     m_ref_one_toggle_facial_landmarks_b->setEnabled(false);
@@ -86,14 +82,32 @@ void ImageEditor::setupConnections()
 {
     connect(m_ref_one_detect_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(detectLandmarksRefOne()));
+
     connect(m_ref_two_detect_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(detectLandmarksRefTwo()));
+
     connect(m_morph_target_b, SIGNAL(released()),
-            m_editor_pane, SLOT(m_morph_target_b_pressed()));
+            this, SLOT(morphPressed()));
+
     connect(m_ref_one_toggle_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(toggleLandmarksRefOne()));
+
     connect(m_ref_two_toggle_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(toggleLandmarksRefTwo()));
+}
+
+/**
+ * @brief ImageEditor::morphPressed
+ */
+void ImageEditor::morphPressed()
+{
+    if(!m_reference_one->hasLandmarks()) {
+        detectLandmarksRefOne();
+    }
+    if(!m_reference_two->hasLandmarks()) {
+        detectLandmarksRefTwo();
+    }
+    m_editor_pane->m_morph_target_b_pressed();
 }
 
 /**
@@ -130,7 +144,6 @@ void ImageEditor::detectLandmarksRefTwo()
  */
 void ImageEditor::toggleLandmarksRefOne()
 {
-    qDebug() << "toggle 1";
     m_reference_one->toggleLandmarks();
 }
 
@@ -139,7 +152,6 @@ void ImageEditor::toggleLandmarksRefOne()
  */
 void ImageEditor::toggleLandmarksRefTwo()
 {
-    qDebug() << "toggle 2";
     m_reference_two->toggleLandmarks();
 }
 
