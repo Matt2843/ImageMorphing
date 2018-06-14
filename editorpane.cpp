@@ -1,6 +1,7 @@
 #include "editorpane.h"
 
 #include "imagecontainer.h"
+#include "labelledslidergroup.h"
 
 #include <QDebug>
 
@@ -14,6 +15,7 @@ EditorPane::EditorPane(QWidget *parent,
                        ImageContainer *m_reference_two,
                        ImageContainer *m_target) :
     QGroupBox("Editor Pane", parent),
+    m_layout(new QHBoxLayout()),
     m_reference_one(m_reference_one),
     m_reference_two(m_reference_two),
     m_target(m_target),
@@ -28,7 +30,12 @@ EditorPane::EditorPane(QWidget *parent,
  */
 void EditorPane::setup()
 {
-
+    QStringList slider_group_one_labels;
+    slider_group_one_labels << "alpha" << "Normal Filter" << "Gaussian Filter" << "Median Filter" << "Bilateral Filter";
+    m_slider_group_one = new LabelledSliderGroup(slider_group_one_labels, this);
+    m_slider_group_one->getSlider(ALPHA)->setValue(50);
+    m_layout->addWidget(m_slider_group_one);
+    setLayout(m_layout);
 }
 
 /**

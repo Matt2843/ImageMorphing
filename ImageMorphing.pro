@@ -34,7 +34,8 @@ SOURCES += \
         scrollableqgroupbox.cpp \
         resultspreview.cpp \
         editorpane.cpp \
-        imageprocessor.cpp
+        imageprocessor.cpp \
+    labelledslidergroup.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -44,7 +45,8 @@ HEADERS += \
         scrollableqgroupbox.h \
         resultspreview.h \
         editorpane.h \
-        imageprocessor.h
+        imageprocessor.h \
+    labelledslidergroup.h
 
 INCLUDEPATH += $$PWD/dlib_build/include
 

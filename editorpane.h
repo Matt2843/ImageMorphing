@@ -4,8 +4,13 @@
 
 #include <QGroupBox>
 
-class ImageContainer;
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
+#include <QStringList>
+
+class ImageContainer;
+class LabelledSliderGroup;
 class EditorPane : public QGroupBox {
     Q_OBJECT
 public:
@@ -14,6 +19,10 @@ public:
                         ImageContainer *m_reference_two = nullptr,
                         ImageContainer *m_target = nullptr);
     ~EditorPane() = default;
+
+    enum SLIDERS {
+        ALPHA, NORMAL, GAUSSIAN, MEDIAN, BILATERAL
+    };
 
 private:
     void setup();
@@ -26,6 +35,7 @@ public slots:
     void m_morph_target_b_pressed();
 
 private:
+    QHBoxLayout *m_layout;
 
     ImageContainer *m_reference_one;
     ImageContainer *m_reference_two;
@@ -33,4 +43,5 @@ private:
 
     ImageProcessor *m_image_processor;
 
+    LabelledSliderGroup *m_slider_group_one;
 };

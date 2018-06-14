@@ -55,6 +55,7 @@ void ImageEditor::setup()
     m_reference_one_group->addWidget(m_reference_one, 15);
     m_reference_one_group->addLayout(m_ref_one_buttons);
 
+    m_morph_target_b->setEnabled(false);
     m_target_group->addWidget(m_target_label, 1);
     m_target_group->addWidget(m_target, 15);
     m_target_group->addWidget(m_morph_target_b);
