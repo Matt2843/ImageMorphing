@@ -5,7 +5,8 @@
 
 #include <QMouseEvent>
 
-class DatabasePreview : public ScrollableQGroupBox {
+class DatabasePreview : public ScrollableQGroupBox
+{
     Q_OBJECT
 
 public:

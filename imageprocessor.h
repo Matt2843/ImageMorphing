@@ -19,7 +19,8 @@ struct TriangleIndices
 };
 
 class ImageContainer;
-class ImageProcessor : public QWidget {
+class ImageProcessor : public QWidget
+{
     Q_OBJECT
 
 public:
@@ -27,7 +28,8 @@ public:
     ~ImageProcessor() = default;
 
     enum Filter {
-      HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL
+      HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL, SHARPNESS,
+        CONTRAST, BRIGHTNESS
     };
 
 public:

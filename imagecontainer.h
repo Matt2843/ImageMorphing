@@ -9,7 +9,8 @@
 #include <QPoint>
 #include <QString>
 
-class ImageContainer : public QLabel {
+class ImageContainer : public QLabel
+{
     Q_OBJECT
 public:
     explicit ImageContainer(QWidget * parent = nullptr);
@@ -25,14 +26,20 @@ signals:
 
 public:
     void update(ImageContainer *other);
+
     bool setImageSource(const QString &path);
     void setImageSource(const QImage &source);
     void setImage(const QImage &image);
+    void setSourceToTempSource();
     QImage getSource();
+
     QUrl getImagePath();
     QString getImageTitle();
+    void setImageTitle(const QString &title);
+
     bool hasImage();
-    void setLandmarks(const std::vector<QPoint> & landmarks);
+
+    void setLandmarks(const std::vector<QPoint> & landmarks, bool extra_landmarks = true);
     std::vector<QPoint> getLandmarks();
     bool hasLandmarks();
     void toggleLandmarks();
@@ -47,7 +54,7 @@ private:
     QString m_img_title;
 
     QImage m_source;
-    QImage m_source_orig;
+    QImage m_temp_source;
 
     bool m_contains_image;
 

@@ -16,6 +16,7 @@ ImageEditor::ImageEditor(QWidget *parent) :
     m_target(new ImageContainer(this)),
     m_ref_one_buttons(new QHBoxLayout()),
     m_ref_two_buttons(new QHBoxLayout()),
+    m_target_buttons(new QHBoxLayout()),
     m_reference_one_group(new QVBoxLayout()),
     m_reference_two_group(new QVBoxLayout()),
     m_target_group(new QVBoxLayout()),
@@ -24,11 +25,13 @@ ImageEditor::ImageEditor(QWidget *parent) :
     m_ref_two_detect_facial_landmarks_b(new QPushButton("Detect Landmarks", this)),
     m_ref_two_toggle_facial_landmarks_b(new QPushButton("Display Landmarks", this)),
     m_morph_target_b(new QPushButton("Morph", this)),
+    m_target_toggle_facial_landmarks_b(new QPushButton("Display Landmarks", this)),
     m_containers_layout(new QHBoxLayout()),
     m_ref_one_label(new QLabel("Reference One:", this)),
     m_target_label(new QLabel("Target:", this)),
     m_ref_two_label(new QLabel("Reference Two:", this)),
-    m_editor_pane(new EditorPane(this, m_reference_one, m_reference_two, m_target))
+    m_editor_pane(new EditorPane(this, m_reference_one, m_reference_two, m_target)),
+    console(new Console(this))
 {
     setup();
     setupConnections();
@@ -41,12 +44,12 @@ ImageEditor::ImageEditor(QWidget *parent) :
  */
 void ImageEditor::setup()
 {
-    setLayout(m_layout);
-
     m_ref_one_detect_facial_landmarks_b->setEnabled(false);
     m_ref_two_detect_facial_landmarks_b->setEnabled(false);
     m_ref_one_toggle_facial_landmarks_b->setEnabled(false);
     m_ref_two_toggle_facial_landmarks_b->setEnabled(false);
+    m_morph_target_b->setEnabled(false);
+    m_target_toggle_facial_landmarks_b->setEnabled(false);
 
     m_ref_one_buttons->addWidget(m_ref_one_detect_facial_landmarks_b);
     m_ref_one_buttons->addWidget(m_ref_one_toggle_facial_landmarks_b);
@@ -55,10 +58,12 @@ void ImageEditor::setup()
     m_reference_one_group->addWidget(m_reference_one, 15);
     m_reference_one_group->addLayout(m_ref_one_buttons);
 
-    m_morph_target_b->setEnabled(false);
+    m_target_buttons->addWidget(m_morph_target_b);
+    m_target_buttons->addWidget(m_target_toggle_facial_landmarks_b);
+
     m_target_group->addWidget(m_target_label, 1);
     m_target_group->addWidget(m_target, 15);
-    m_target_group->addWidget(m_morph_target_b);
+    m_target_group->addLayout(m_target_buttons);
 
     m_ref_two_buttons->addWidget(m_ref_two_detect_facial_landmarks_b);
     m_ref_two_buttons->addWidget(m_ref_two_toggle_facial_landmarks_b);
@@ -71,8 +76,10 @@ void ImageEditor::setup()
     m_containers_layout->addLayout(m_target_group);
     m_containers_layout->addLayout(m_reference_two_group);
 
-    m_layout->addLayout(m_containers_layout, 14);
-    m_layout->addWidget(m_editor_pane, 9);
+    m_layout->addLayout(m_containers_layout, 6);
+    m_layout->addWidget(m_editor_pane, 2);
+    m_layout->addWidget(console, 1);
+    setLayout(m_layout);
 }
 
 /**
@@ -90,11 +97,17 @@ void ImageEditor::setupConnections()
     connect(m_morph_target_b, SIGNAL(released()),
             this, SLOT(morphPressed()));
 
+    connect(m_target_toggle_facial_landmarks_b, SIGNAL(released()),
+            this, SLOT(toggleLandmarksTarget()));
+
     connect(m_ref_one_toggle_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(toggleLandmarksRefOne()));
 
     connect(m_ref_two_toggle_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(toggleLandmarksRefTwo()));
+
+    connect(m_editor_pane, SIGNAL(addToResultsInvoked(MorphResult)),
+            this, SIGNAL(forwardMorphResult(MorphResult)));
 }
 
 /**
@@ -109,7 +122,7 @@ void ImageEditor::morphPressed()
         detectLandmarksRefTwo();
     }
     m_editor_pane->m_morph_target_b_pressed();
-
+    m_target_toggle_facial_landmarks_b->setEnabled(true);
 }
 
 /**
@@ -117,9 +130,6 @@ void ImageEditor::morphPressed()
  */
 void ImageEditor::detectLandmarksRefOne()
 {
-    // TODO: RETURN .. detect landmarks in reference one via editor_pane->detectLandmarks(m_reference_one)
-    // also implement an overlay QImage in the imagecontainer class to contain the detected landmarks
-    // to instantly toggle between showing / not showing the detected landmarks.
     if(m_editor_pane->detectLandmarks(m_reference_one)) {
         m_ref_one_detect_facial_landmarks_b->setEnabled(false);
         m_ref_one_toggle_facial_landmarks_b->setEnabled(true);
@@ -139,6 +149,14 @@ void ImageEditor::detectLandmarksRefTwo()
     } else {
         m_ref_two_toggle_facial_landmarks_b->setEnabled(false);
     }
+}
+
+/**
+ * @brief ImageEditor::toggleLandmarksTarget
+ */
+void ImageEditor::toggleLandmarksTarget()
+{
+    m_target->toggleLandmarks();
 }
 
 /**

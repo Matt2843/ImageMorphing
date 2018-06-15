@@ -1,19 +1,20 @@
 #pragma once
 
 #include "imageprocessor.h"
+#include "morphresult.h"
 
 #include <QGroupBox>
 
-#include <memory>
-
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-
-#include <QStringList>
+#include <QPushButton>
+#include <QButtonGroup>
+#include <QRadioButton>
 
 class ImageContainer;
 class LabelledSliderGroup;
-class EditorPane : public QGroupBox {
+class EditorPane : public QGroupBox
+{
     Q_OBJECT
 public:
     explicit EditorPane(QWidget *parent = nullptr,
@@ -23,8 +24,12 @@ public:
     ~EditorPane() = default;
 
     enum SLIDERS {
-        ALPHA, HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL
+        ALPHA, HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL,
+        SHARPNESS, CONTRAST, BRIGHTNESS
     };
+
+signals:
+    void addToResultsInvoked(MorphResult);
 
 private:
     void setup();
@@ -34,10 +39,11 @@ public:
     bool detectLandmarks(ImageContainer *img);
     void setMorphReady(bool ready = true);
     void toggleFilters(bool on);
+    void resetSliders();
 
 public slots:
     void m_morph_target_b_pressed();
-    void applyFilters(ImageProcessor::Filter which, int intensity) const;
+    void applyFilters(QImage &img) const;
 
 private slots:
     void smoothMorph(int alpha);
@@ -45,6 +51,17 @@ private slots:
     void smoothGaussian(int intensity);
     void smoothMedian(int intensity);
     void smoothBilateral(int intensity);
+    void smoothSharpness(int intensity);
+    void smoothContrast(int intensity);
+    void smoothBrightness(int intensity);
+
+    void m_r_normal_selected();
+    void m_r_grayscale_selected();
+    void m_r_fourier_selected();
+
+    void m_b_add_to_results_pressed();
+    void m_b_save_as_pressed();
+    void m_b_create_database_pressed();
 
 private:
     QHBoxLayout *m_layout;
@@ -55,5 +72,18 @@ private:
 
     ImageProcessor *m_image_processor;
 
+    QGroupBox *m_radio_buttons_container;
+    QButtonGroup *m_radio_buttons;
+    QRadioButton *m_r_normal;
+    QRadioButton *m_r_grayscale;
+    QRadioButton *m_r_fourier;
+
+    QPushButton *m_b_add_to_results;
+    QPushButton *m_b_save_as;
+    QPushButton *m_b_create_database;
+
     LabelledSliderGroup *m_slider_group_one;
+    LabelledSliderGroup *m_slider_group_two;
+
+    bool m_grayscale;
 };

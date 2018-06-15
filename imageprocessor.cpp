@@ -188,9 +188,6 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
                                  ImageContainer *target,
                                  float alpha)
 {
-//    cv::Mat cv_ref_one = QImageToMat(*ref_one->getSource(), CV_8UC3);
-//    cv::Mat cv_ref_two = QImageToMat(*ref_two->getSource(), CV_8UC3);
-
     cv::Mat cv_ref_one = qImageToCVMat(ref_one->getSource());
     cv::Mat cv_ref_two = qImageToCVMat(ref_two->getSource());
 
@@ -243,7 +240,12 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
     morphed_image.convertTo(morphed_image, CV_8UC4);
     QImage morph_result = cvMatToQImage(morphed_image);
     target->setImageSource(morph_result);
-    // TODO: set target name, hasimage etc..
+    target->setImageTitle("(" + ref_one->getImageTitle() + ")" + "_x_" + "(" + ref_two->getImageTitle() + ")");
+    std::vector<QPoint> morph_result_landmarks;
+    for(const auto & landmark : average_weighted_landmarks) {
+        morph_result_landmarks.push_back(QPoint(landmark.x, landmark.y));
+    }
+    target->setLandmarks(morph_result_landmarks, false);
 }
 
 
@@ -257,6 +259,7 @@ void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
 {
     if(intensity <= 2) return;
     cv::Mat before = QImageToMat(target, CV_8UC3);
+    //cv::Mat before = qImageToCVMat(target);
     cv::Mat destination = cv::Mat::zeros(target.height(),
                                          target.width(),
                                          before.type());
@@ -276,8 +279,19 @@ void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
     case BILATERAL:
         cv::bilateralFilter(before, destination, intensity_i, intensity_i * 2, intensity_i / 2);
         break;
+    case SHARPNESS:
+        cv::GaussianBlur(before, destination, cv::Size(0, 0), intensity_i);
+        cv::addWeighted(before, 1.5, destination, -0.5, 0, destination);
+        break;
+    case CONTRAST:
+        before.convertTo(destination, -1, (1 + (float)intensity/100), 0);
+        break;
+    case BRIGHTNESS:
+        before.convertTo(destination, -1, 1, intensity);
+        break;
     }
     target = MatToQImage(destination, QImage::Format_RGB888);
+    //target = cvMatToQImage(destination);
 }
 
 QImage ImageProcessor::MatToQImage(const cv::Mat &mat, QImage::Format format)

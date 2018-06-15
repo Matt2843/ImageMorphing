@@ -36,20 +36,13 @@ MainWindow::MainWindow(QMainWindow *parent) :
 void MainWindow::setup()
 {
     QScreen * screen = QGuiApplication::primaryScreen();
-    // make this relative.
     resize(screen->geometry().width() * 0.7, screen->geometry().height() * 0.7);
-    // set central widget and initialize the layout.
     setCentralWidget(m_content_pane);
     m_content_pane->setLayout(m_layout);
 
-    // Add the database preview
     m_layout->addWidget(m_database_preview, 1);
-
-    // Add the editor and results preview
-    m_second_layout->addWidget(m_image_editor, 3);
-    m_second_layout->addWidget(m_results_preview, 1);
-
-    m_layout->addLayout(m_second_layout, 3);
+    m_layout->addWidget(m_image_editor, 3);
+    m_layout->addWidget(m_results_preview, 1);
 }
 
 /**
@@ -64,6 +57,9 @@ void MainWindow::setupConnections()
 
     connect(m_database_preview, SIGNAL(referenceImageRequest(ImageContainer*,int)),
             m_image_editor, SLOT(attemptToSetReference(ImageContainer*,int)));
+
+    connect(m_image_editor, SIGNAL(forwardMorphResult(MorphResult)),
+            m_results_preview, SLOT(addMorphResult(MorphResult)));
 }
 
 /**
@@ -97,7 +93,7 @@ void MainWindow::createActions()
     a_exit->setStatusTip("Exit");
     connect(a_exit, &QAction::triggered, this, &MainWindow::exit);
 
-    a_generateMorphDatabase = new QAction(tr("Generate Morp-Database"), this);
+    a_generateMorphDatabase = new QAction(tr("Generate Morph-Database"), this);
     a_generateMorphDatabase->setStatusTip("Automate the morphing process");
     a_generateMorphDatabase->setEnabled(false);
     connect(a_generateMorphDatabase, &QAction::triggered, this, &MainWindow::generateMorphDatabase);

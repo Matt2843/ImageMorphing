@@ -1,6 +1,8 @@
 #include "databasepreview.h"
 
-#include <numeric>
+#include "console.h"
+
+#include <algorithm>
 
 #include <QString>
 #include <QDebug>
@@ -128,8 +130,10 @@ void scanImageResolutions(const QStringList &image_file_paths)
         widths.push_back(img.width());
         heights.push_back(img.height());
     }
-    DatabasePreview::m_image_width = (int) (std::accumulate(widths.begin(), widths.end(), 0) / widths.size());
-    DatabasePreview::m_image_height = (int) (std::accumulate(heights.begin(), heights.end(), 0) / heights.size());
+    DatabasePreview::m_image_width = (int)(*std::min_element(widths.begin(), widths.end()));
+    DatabasePreview::m_image_height = (int)(*std::min_element(heights.begin(), heights.end()));
+    Console::appendToConsole("Minimum resolution: " + QString::number(DatabasePreview::m_image_width)
+                             + "x" + QString::number(DatabasePreview::m_image_height) + " suggested to user.");
 }
 
 
@@ -145,6 +149,7 @@ bool DatabasePreview::loadDatabase(const QStringList &image_file_paths)
     scanImageResolutions(image_file_paths);
     if(!imageResolutionDialog()) return false;
     for(const QString & path : image_file_paths) {
+        Console::appendToConsole("Adding and scaling: " + path);
         ImageContainer *image = new ImageContainer(this);
         image->resize(m_content_pane->geometry().width(), m_content_pane->geometry().height() / 5);
         if(!image->setImageSource(path)) return false;

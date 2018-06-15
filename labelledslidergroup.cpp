@@ -90,9 +90,16 @@ float LabelledSliderGroup::getSliderValue(unsigned long which)
  */
 void LabelledSliderGroup::toggleSliders(unsigned long from, unsigned long to, bool on)
 {
-    for(from; from <= to; ++from) {
-        m_sliders[from]->setEnabled(on);
-        if(!on) m_sliders[from]->setValue(0);
+    for(unsigned int i = from; i <= to; ++i) {
+        m_sliders[i]->setEnabled(on);
+        if(!on) m_sliders[i]->setValue(0);
+    }
+}
+
+void LabelledSliderGroup::resetSliders(unsigned long from, unsigned long to)
+{
+    for(unsigned int i = from; i <= to; ++i) {
+        m_sliders[i]->setValue(0);
     }
 }
 

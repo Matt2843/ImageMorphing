@@ -11,7 +11,8 @@
 #include <QString>
 #include <QStringList>
 
-class LabelledSliderGroup : public QWidget {
+class LabelledSliderGroup : public QWidget
+{
     Q_OBJECT
 public:
     LabelledSliderGroup(const QStringList &labels, QWidget *parent = nullptr, Qt::Orientation orientation = Qt::Horizontal);
@@ -25,6 +26,7 @@ public:
     QSlider* getSlider(unsigned long which);
     float getSliderValue(unsigned long which);
     void toggleSliders(unsigned long from, unsigned long to, bool on);
+    void resetSliders(unsigned long from, unsigned long to);
 
 private slots:
     void setSliderToolTip(int val, unsigned long which);

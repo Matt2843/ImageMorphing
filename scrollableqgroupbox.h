@@ -12,7 +12,8 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 
-class ScrollableQGroupBox : public QGroupBox {
+class ScrollableQGroupBox : public QGroupBox
+{
     Q_OBJECT
 
 public:

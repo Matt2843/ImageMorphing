@@ -19,6 +19,7 @@ ImageContainer::ImageContainer(QWidget *parent) :
     QLabel(parent),
     m_contains_image(false)
 {
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     setScaledContents(true);
     setFrameShape(QFrame::Box);
     setLineWidth(1);
@@ -51,6 +52,7 @@ void ImageContainer::update(ImageContainer *other)
     m_img_path = other->m_img_path;
     m_img_title = other->m_img_title;
     m_source = other->m_source;
+    m_temp_source = other->m_temp_source;
     m_contains_image = other->m_contains_image;
     m_landmark_image = other->m_landmark_image;
     m_landmarks = other->m_landmarks;
@@ -68,7 +70,9 @@ bool ImageContainer::setImageSource(const QString &path)
 {
     auto loaded = m_source.load(path);
     if(!loaded) return false;
-    m_source = m_source.scaled(DatabasePreview::m_image_width, DatabasePreview::m_image_height);
+    m_source = m_source.scaled(DatabasePreview::m_image_width, DatabasePreview::m_image_height,
+                               Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    m_temp_source = m_source;
     m_contains_image = true;
     m_img_path = path;
     m_img_title = m_img_path.toString();
@@ -90,13 +94,22 @@ void ImageContainer::setImageSource(const QImage &source)
 }
 
 /**
- * @brief ImageContainer::setTempImage
+ * @brief ImageContainer::setImage
  * @param image
  */
 void ImageContainer::setImage(const QImage &image)
 {
+    m_temp_source = image;
     m_contains_image = true;
-    setPixmap(QPixmap::fromImage(image));
+    setPixmap(QPixmap::fromImage(m_temp_source));
+}
+
+/**
+ * @brief ImageContainer::setSourceToTempSource
+ */
+void ImageContainer::setSourceToTempSource()
+{
+    m_source = m_temp_source;
 }
 
 /**
@@ -126,6 +139,15 @@ QString ImageContainer::getImageTitle()
 }
 
 /**
+ * @brief ImageContainer::setImageTitle
+ * @param title
+ */
+void ImageContainer::setImageTitle(const QString &title)
+{
+    m_img_title = title;
+}
+
+/**
  * @brief ImageContainer::hasImage
  * @return
  */
@@ -147,22 +169,23 @@ std::vector<QPoint> ImageContainer::getLandmarks()
  * @brief ImageContainer::setLandmarks
  * @param landmarks
  */
-void ImageContainer::setLandmarks(const std::vector<QPoint> &landmarks)
+void ImageContainer::setLandmarks(const std::vector<QPoint> &landmarks, bool extra_landmarks)
 {
+    m_isDisplayingLandmarks = false;
     m_landmarks = landmarks;
+    if(extra_landmarks) {
+        // manually add corner points
+        m_landmarks.push_back(QPoint(0, 0)); // top-left
+        m_landmarks.push_back(QPoint(m_source.width() - 1, 0)); // top-right
+        m_landmarks.push_back(QPoint(0, m_source.height() - 1)); // bot-left
+        m_landmarks.push_back(QPoint(m_source.width() - 1, m_source.height() - 1)); // bot-right
 
-    // manually add corner points
-    m_landmarks.push_back(QPoint(0, 0)); // top-left
-    m_landmarks.push_back(QPoint(m_source.width() - 1, 0)); // top-right
-    m_landmarks.push_back(QPoint(0, m_source.height() - 1)); // bot-left
-    m_landmarks.push_back(QPoint(m_source.width() - 1, m_source.height() - 1)); // bot-right
-
-    // manually add midpoints
-    m_landmarks.push_back(QPoint(0, m_source.height() / 2)); // mid-left
-    m_landmarks.push_back(QPoint(m_source.width() / 2, 0)); // mid-top
-    m_landmarks.push_back(QPoint(m_source.width() - 1, m_source.height() / 2)); // mid-right
-    m_landmarks.push_back(QPoint(m_source.width() / 2, m_source.height() - 1)); // mid-bot
-
+        // manually add midpoints
+        m_landmarks.push_back(QPoint(0, m_source.height() / 2)); // mid-left
+        m_landmarks.push_back(QPoint(m_source.width() / 2, 0)); // mid-top
+        m_landmarks.push_back(QPoint(m_source.width() - 1, m_source.height() / 2)); // mid-right
+        m_landmarks.push_back(QPoint(m_source.width() / 2, m_source.height() - 1)); // mid-bot
+    }
     generateLandmarkImage();
 }
 

@@ -3,6 +3,7 @@
 
 #include "editorpane.h"
 #include "imagecontainer.h"
+#include "console.h"
 
 #include <string>
 
@@ -11,12 +12,16 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 
-class ImageEditor : public QGroupBox {
+class ImageEditor : public QGroupBox
+{
     Q_OBJECT
 
 public:
     explicit ImageEditor(QWidget *parent = nullptr);
     ~ImageEditor() = default;
+
+signals:
+    void forwardMorphResult(MorphResult);
 
 private:
     void setup();
@@ -26,6 +31,7 @@ private slots:
     void morphPressed();
     void detectLandmarksRefOne();
     void detectLandmarksRefTwo();
+    void toggleLandmarksTarget();
     void toggleLandmarksRefOne();
     void toggleLandmarksRefTwo();
 
@@ -47,6 +53,7 @@ private:
 
     QHBoxLayout *m_ref_one_buttons;
     QHBoxLayout *m_ref_two_buttons;
+    QHBoxLayout *m_target_buttons;
 
     QVBoxLayout *m_reference_one_group;
     QVBoxLayout *m_reference_two_group;
@@ -57,6 +64,7 @@ private:
     QPushButton *m_ref_two_detect_facial_landmarks_b;
     QPushButton *m_ref_two_toggle_facial_landmarks_b;
     QPushButton *m_morph_target_b;
+    QPushButton *m_target_toggle_facial_landmarks_b;
 
     QHBoxLayout *m_containers_layout;
 
@@ -65,4 +73,5 @@ private:
     QLabel *m_ref_two_label;
 
     EditorPane *m_editor_pane;
+    Console *console;
 };

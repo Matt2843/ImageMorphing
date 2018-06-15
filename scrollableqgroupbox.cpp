@@ -1,6 +1,7 @@
 #include "scrollableqgroupbox.h"
 
 #include <QHBoxLayout>
+#include <QDebug>
 
 /**
  * @brief ScrollableQGroupBox::ScrollableQGroupBox
@@ -42,6 +43,7 @@ void ScrollableQGroupBox::setup(Orientation orientation)
 void ScrollableQGroupBox::updatePreview()
 {
     for(const auto & data_point : m_container) {
+        data_point->resize(m_scroll_area->width(), m_scroll_area->height() / 3);
         m_content_pane_layout->addWidget(data_point);
     }
 }
@@ -55,6 +57,7 @@ void ScrollableQGroupBox::clearContainerAndPreview()
 {
     for(const auto & data_point : m_container) {
         m_content_pane_layout->removeWidget(data_point);
+        delete data_point;
     }
     m_container.clear();
 }
