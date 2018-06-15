@@ -109,6 +109,7 @@ void ImageEditor::morphPressed()
         detectLandmarksRefTwo();
     }
     m_editor_pane->m_morph_target_b_pressed();
+
 }
 
 /**
@@ -157,13 +158,23 @@ void ImageEditor::toggleLandmarksRefTwo()
 }
 
 /**
+ * @brief ImageEditor::testMorphConditions
+ */
+void ImageEditor::testMorphConditions()
+{
+    if(!m_reference_one->hasImage() || !m_reference_two->hasImage()) return;
+    m_morph_target_b->setEnabled(true);
+    m_editor_pane->setMorphReady();
+}
+
+/**
  * @brief ImageEditor::setReferenceOne
  * A public method for setting the first preview pane.
  * @param ref_one
  */
 void ImageEditor::setReferenceOne(ImageContainer *ref_one)
 {
-    //m_reference_one->setImageSource(ref_one->getImagePath().toString());
+    m_editor_pane->toggleFilters(false);
     m_reference_one->update(ref_one);
     if(m_reference_one->hasLandmarks()) {
         m_ref_one_detect_facial_landmarks_b->setEnabled(false);
@@ -172,6 +183,7 @@ void ImageEditor::setReferenceOne(ImageContainer *ref_one)
         m_ref_one_detect_facial_landmarks_b->setEnabled(true);
         m_ref_one_toggle_facial_landmarks_b->setEnabled(false);
     }
+    testMorphConditions();
 }
 
 /**
@@ -181,7 +193,7 @@ void ImageEditor::setReferenceOne(ImageContainer *ref_one)
  */
 void ImageEditor::setReferenceTwo(ImageContainer *ref_two)
 {
-    //m_reference_two->setImageSource(ref_two->getImagePath().toString());
+    m_editor_pane->toggleFilters(false);
     m_reference_two->update(ref_two);
     if(m_reference_two->hasLandmarks()) {
         m_ref_two_detect_facial_landmarks_b->setEnabled(false);
@@ -190,6 +202,7 @@ void ImageEditor::setReferenceTwo(ImageContainer *ref_two)
         m_ref_two_detect_facial_landmarks_b->setEnabled(true);
         m_ref_two_toggle_facial_landmarks_b->setEnabled(false);
     }
+    testMorphConditions();
 }
 
 /**

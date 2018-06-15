@@ -148,12 +148,10 @@ bool DatabasePreview::loadDatabase(const QStringList &image_file_paths)
         ImageContainer *image = new ImageContainer(this);
         image->resize(m_content_pane->geometry().width(), m_content_pane->geometry().height() / 5);
         if(!image->setImageSource(path)) return false;
-
         connect(image, SIGNAL(doubleClickDetected(ImageContainer*)),
                 this, SIGNAL(imageDoubleClicked(ImageContainer*)));
         connect(image, SIGNAL(mousePressDetected(ImageContainer*, QMouseEvent*)),
                 this, SLOT(imageRightClickInvoked(ImageContainer*, QMouseEvent*)));
-
         m_container.insert(image);
     }
     return true;

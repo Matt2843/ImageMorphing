@@ -4,6 +4,8 @@
 
 #include <QGroupBox>
 
+#include <memory>
+
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
@@ -21,7 +23,7 @@ public:
     ~EditorPane() = default;
 
     enum SLIDERS {
-        ALPHA, NORMAL, GAUSSIAN, MEDIAN, BILATERAL
+        ALPHA, HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL
     };
 
 private:
@@ -30,9 +32,19 @@ private:
 
 public:
     bool detectLandmarks(ImageContainer *img);
+    void setMorphReady(bool ready = true);
+    void toggleFilters(bool on);
 
 public slots:
     void m_morph_target_b_pressed();
+    void applyFilters(ImageProcessor::Filter which, int intensity) const;
+
+private slots:
+    void smoothMorph(int alpha);
+    void smoothHomogeneous(int intensity);
+    void smoothGaussian(int intensity);
+    void smoothMedian(int intensity);
+    void smoothBilateral(int intensity);
 
 private:
     QHBoxLayout *m_layout;

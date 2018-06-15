@@ -6,6 +6,7 @@
 #include <QRegExp>
 #include <QMouseEvent>
 
+#include <QBitmap>
 #include <QPainter>
 #include <QPen>
 
@@ -42,17 +43,6 @@ void ImageContainer::mousePressEvent(QMouseEvent *event)
 }
 
 /**
- * @brief ImageContainer::updatePixmap
- * A public slot to update the image-container pixmap
- * when the target image pointer has changed.
- * @param image
- */
-void ImageContainer::updatePixmap(QImage *image)
-{
-    setPixmap(QPixmap::fromImage(*image));
-}
-
-/**
  * @brief ImageContainer::update
  * @param other
  */
@@ -65,7 +55,7 @@ void ImageContainer::update(ImageContainer *other)
     m_landmark_image = other->m_landmark_image;
     m_landmarks = other->m_landmarks;
     m_isDisplayingLandmarks = other->m_isDisplayingLandmarks;
-    updatePixmap(&m_source);
+    setImage(m_source);
 }
 
 /**
@@ -85,7 +75,6 @@ bool ImageContainer::setImageSource(const QString &path)
     m_img_title.replace(QRegExp("(.jpg)|(.png)|(.jpeg)"),"");
     m_img_title.replace(QRegExp(".*/"),"");
     setPixmap(QPixmap::fromImage(m_source));
-    emit sourceChanged(&m_source);
     return true;
 }
 
@@ -95,20 +84,29 @@ bool ImageContainer::setImageSource(const QString &path)
  */
 void ImageContainer::setImageSource(const QImage &source)
 {
-    m_source = source;
-    setPixmap(QPixmap::fromImage(source));
-    emit sourceChanged(&m_source);
+    m_source = source.copy();
+    m_contains_image = true;
+    setPixmap(QPixmap::fromImage(m_source));
+}
+
+/**
+ * @brief ImageContainer::setTempImage
+ * @param image
+ */
+void ImageContainer::setImage(const QImage &image)
+{
+    m_contains_image = true;
+    setPixmap(QPixmap::fromImage(image));
 }
 
 /**
  * @brief ImageContainer::getSource
  * @return
  */
-QImage * ImageContainer::getSource()
+QImage ImageContainer::getSource()
 {
-    return &m_source;
+    return m_source.copy();
 }
-
 /**
  * @brief ImageContainer::getImagePath
  * @return

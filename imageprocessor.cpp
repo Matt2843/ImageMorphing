@@ -3,7 +3,6 @@
 #include "imagecontainer.h"
 #include "databasepreview.h"
 
-#include <iostream>
 #include <unordered_map>
 
 #include <QDebug>
@@ -71,12 +70,6 @@ std::vector<QPoint> ImageProcessor::getFacialFeatures(const std::string &img_pat
  */
 std::vector<TriangleIndices> ImageProcessor::delaunayTriangulation(const std::vector<cv::Point2f> &indices)
 {
-
-//    std::unordered_map<std::pair<float,float>, unsigned long> lookup;
-//    for(unsigned long i = 0; i < indices.size(); i++) {
-//        lookup.insert(std::make_pair(std::make_pair(indices[i].x, indices[i].y), i));
-//    }
-
     auto lookup = [&](const cv::Point2f &point){
         return (unsigned long)(std::find(indices.begin(), indices.end(), point) - indices.begin());
     };
@@ -195,8 +188,11 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
                                  ImageContainer *target,
                                  float alpha)
 {
-    cv::Mat cv_ref_one = qImageToCVMat(*ref_one->getSource());
-    cv::Mat cv_ref_two = qImageToCVMat(*ref_two->getSource());
+//    cv::Mat cv_ref_one = QImageToMat(*ref_one->getSource(), CV_8UC3);
+//    cv::Mat cv_ref_two = QImageToMat(*ref_two->getSource(), CV_8UC3);
+
+    cv::Mat cv_ref_one = qImageToCVMat(ref_one->getSource());
+    cv::Mat cv_ref_two = qImageToCVMat(ref_two->getSource());
 
     cv_ref_one.convertTo(cv_ref_one, CV_32F);
     cv_ref_two.convertTo(cv_ref_two, CV_32F);
@@ -220,8 +216,6 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
     auto triangles = delaunayTriangulation(average_landmarks);
     auto lm_one = ref_one->getLandmarks();
     auto lm_two = ref_two->getLandmarks();
-    // create the corresponding triangulation on the three landmark sets:
-
 
     for(const auto &triangle : triangles) {
         std::vector<cv::Point2f> t_one, t_two, t_target;
@@ -248,9 +242,55 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
     }
     morphed_image.convertTo(morphed_image, CV_8UC4);
     QImage morph_result = cvMatToQImage(morphed_image);
-    qDebug() << morph_result.size();
     target->setImageSource(morph_result);
     // TODO: set target name, hasimage etc..
+}
+
+
+
+/**
+ * @brief ImageProcessor::normalFilter
+ * @param target
+ * @param intensity
+ */
+void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
+{
+    if(intensity <= 2) return;
+    cv::Mat before = QImageToMat(target, CV_8UC3);
+    cv::Mat destination = cv::Mat::zeros(target.height(),
+                                         target.width(),
+                                         before.type());
+    int intensity_i = ceil(intensity) / 3;
+    switch(filter) {
+    case HOMOGENEOUS:
+        cv::blur(before, destination, cv::Size(intensity_i, intensity_i), cv::Point(-1, -1));
+        break;
+    case GAUSSIAN:
+        if(intensity_i %2 == 0) intensity_i++;
+        cv::GaussianBlur(before, destination, cv::Size(intensity_i, intensity_i), 0, 0);
+        break;
+    case MEDIAN:
+        if(intensity_i % 2 == 0) intensity_i++;
+        cv::medianBlur(before, destination, intensity_i);
+        break;
+    case BILATERAL:
+        cv::bilateralFilter(before, destination, intensity_i, intensity_i * 2, intensity_i / 2);
+        break;
+    }
+    target = MatToQImage(destination, QImage::Format_RGB888);
+}
+
+QImage ImageProcessor::MatToQImage(const cv::Mat &mat, QImage::Format format)
+{
+    return QImage(mat.data, mat.cols, mat.rows,
+                  mat.step, format).copy();
+}
+
+cv::Mat ImageProcessor::QImageToMat(const QImage &img, int format)
+{
+    return cv::Mat(img.height(), img.width(), format,
+                   const_cast<uchar*>(img.bits()),
+                   img.bytesPerLine()).clone();
 }
 
 /**
@@ -264,7 +304,6 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
 cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
 {
     cv::Mat image;
-
     if(qimg.format() == QImage::Format_ARGB32 || qimg.format() == QImage::Format_ARGB32_Premultiplied) {
         cv::Mat cvimg(qimg.height(), qimg.width(), CV_8UC4, const_cast<uchar*>(qimg.bits()), static_cast<std::size_t>(qimg.bytesPerLine()));
         image = copy ? cvimg.clone() : cvimg;
@@ -272,7 +311,7 @@ cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
         cv::Mat cvimg(qimg.height(), qimg.width(), CV_8UC4, const_cast<uchar*>(qimg.bits()), static_cast<std::size_t>(qimg.bytesPerLine()));
         cv::Mat no_alpha;
         cv::cvtColor(cvimg, no_alpha, cv::COLOR_BGRA2BGR);
-        image = no_alpha;
+        image = copy ? no_alpha.clone() : no_alpha;
     } else if(qimg.format() == QImage::Format_RGB888) {
         QImage swap_rgb_qimage = qimg.rgbSwapped();
         image = cv::Mat(swap_rgb_qimage.height(), swap_rgb_qimage.width(), CV_8UC3, const_cast<uchar*>(swap_rgb_qimage.bits()), static_cast<std::size_t>(swap_rgb_qimage.bytesPerLine())).clone();
@@ -280,7 +319,6 @@ cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
         cv::Mat cvimg(qimg.height(), qimg.width(), CV_8UC1, const_cast<uchar*>(qimg.bits()), static_cast<std::size_t>(qimg.bytesPerLine()));
         image = copy ? cvimg.clone() : cvimg;
     }
-
     return image;
 }
 
@@ -294,7 +332,6 @@ cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
 QImage ImageProcessor::cvMatToQImage(const cv::Mat &img)
 {
     QImage image;
-    std::cout << img.type() << std::endl;
     if(img.type() == CV_8UC4) {
         image = QImage(img.data,
                        img.cols, img.rows,
@@ -311,36 +348,7 @@ QImage ImageProcessor::cvMatToQImage(const cv::Mat &img)
                        static_cast<int>(img.step),
                        QImage::Format_Grayscale8);
     }
-
     return image;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

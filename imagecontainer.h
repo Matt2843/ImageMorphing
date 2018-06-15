@@ -20,18 +20,15 @@ public:
     void mousePressEvent(QMouseEvent *event);
 
 signals:
-    void sourceChanged(QImage *);
     void doubleClickDetected(ImageContainer *);
     void mousePressDetected(ImageContainer *, QMouseEvent *event);
 
-public slots:
-    void updatePixmap(QImage * image);
-
 public:
-    void update(ImageContainer * other);
+    void update(ImageContainer *other);
     bool setImageSource(const QString &path);
     void setImageSource(const QImage &source);
-    QImage * getSource();
+    void setImage(const QImage &image);
+    QImage getSource();
     QUrl getImagePath();
     QString getImageTitle();
     bool hasImage();
@@ -50,6 +47,7 @@ private:
     QString m_img_title;
 
     QImage m_source;
+    QImage m_source_orig;
 
     bool m_contains_image;
 

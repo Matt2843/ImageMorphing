@@ -86,6 +86,17 @@ float LabelledSliderGroup::getSliderValue(unsigned long which)
 }
 
 /**
+ * @brief LabelledSliderGroup::toggleSliders
+ */
+void LabelledSliderGroup::toggleSliders(unsigned long from, unsigned long to, bool on)
+{
+    for(from; from <= to; ++from) {
+        m_sliders[from]->setEnabled(on);
+        if(!on) m_sliders[from]->setValue(0);
+    }
+}
+
+/**
  * @brief LabelledSliderGroup::setSliderToolTip
  * @param s
  * @param val
@@ -93,8 +104,8 @@ float LabelledSliderGroup::getSliderValue(unsigned long which)
 void LabelledSliderGroup::setSliderToolTip(int val, unsigned long which)
 {
     if(which >= m_sliders.size()) return;
-    m_sliders[which]->setToolTip(QString::number((float)val / 100));
-    QToolTip::showText(QCursor::pos(), QString::number((float)val / 100), m_sliders[which]);
+    m_sliders[which]->setToolTip(QString::number(val));
+    QToolTip::showText(QCursor::pos(), QString::number(val), m_sliders[which]);
 }
 
 

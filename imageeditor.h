@@ -30,6 +30,7 @@ private slots:
     void toggleLandmarksRefTwo();
 
 public:
+    void testMorphConditions();
     void setReferenceOne(ImageContainer *ref_one);
     void setReferenceTwo(ImageContainer *ref_two);
 

@@ -24,6 +24,7 @@ public:
     void setLabelText(unsigned long which, const QString &text, Qt::AlignmentFlag flag = Qt::AlignLeft);
     QSlider* getSlider(unsigned long which);
     float getSliderValue(unsigned long which);
+    void toggleSliders(unsigned long from, unsigned long to, bool on);
 
 private slots:
     void setSliderToolTip(int val, unsigned long which);

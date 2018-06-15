@@ -26,13 +26,19 @@ public:
     explicit ImageProcessor(QWidget * parent = nullptr);
     ~ImageProcessor() = default;
 
+    enum Filter {
+      HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL
+    };
+
 public:
     std::vector<QPoint> getFacialFeatures(const std::string &img_path);
+    // These could be private
     std::vector<TriangleIndices> delaunayTriangulation(const std::vector<cv::Point2f> &indices);
     void affineTransform(const cv::Mat &target,
                          const cv::Mat &source,
                          const std::vector<cv::Point2f> &source_triangles,
                          const std::vector<cv::Point2f> &target_triangles);
+
     void warpAndAlphaBlendTriangles(const cv::Mat &cv_ref_one,
                                        const cv::Mat &cv_ref_two,
                                        const cv::Mat &morphed_image,
@@ -44,8 +50,12 @@ public:
                      ImageContainer *ref_two,
                      ImageContainer *target,
                      float alpha);
+    void applyFilter(QImage &target, Filter filter, int intensity);
 
-private:
+public:
+    QImage MatToQImage(const cv::Mat &mat, QImage::Format format);
+    cv::Mat QImageToMat(const QImage &img, int format);
+
     cv::Mat qImageToCVMat(const QImage &qimg, bool copy = true);
     QImage cvMatToQImage(const cv::Mat &img);
 };
