@@ -105,9 +105,6 @@ void ImageEditor::setupConnections()
 
     connect(m_ref_two_toggle_facial_landmarks_b, SIGNAL(released()),
             this, SLOT(toggleLandmarksRefTwo()));
-
-    connect(m_editor_pane, SIGNAL(addToResultsInvoked(MorphResult)),
-            this, SIGNAL(forwardMorphResult(MorphResult)));
 }
 
 /**
@@ -253,4 +250,13 @@ void ImageEditor::attemptToSetReference(ImageContainer *img, int number)
     } else if (number == 2) {
         setReferenceTwo(img);
     }
+}
+
+/**
+ * @brief ImageEditor::getEditorPane
+ * @return
+ */    EditorPane* getEditorPane();
+EditorPane* ImageEditor::getEditorPane()
+{
+    return m_editor_pane;
 }

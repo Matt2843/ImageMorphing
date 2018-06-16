@@ -2,9 +2,12 @@
 
 #include "imagecontainer.h"
 #include "labelledslidergroup.h"
+#include "console.h"
 
 #include <QDebug>
 #include <QStringList>
+#include <QFileDialog>
+#include <QFile>
 
 /**
  * @brief EditorPane::EditorPane
@@ -135,8 +138,7 @@ bool EditorPane::detectLandmarks(ImageContainer *img)
 {
     if(img->hasLandmarks()) return false;
     if(!img->hasImage()) return false;
-    std::string img_path = img->getImagePath().toString().toStdString();
-    img->setLandmarks(m_image_processor->getFacialFeatures(img_path));
+    img->setLandmarks(m_image_processor->getFacialFeatures(img));
     return true;
 }
 
@@ -310,23 +312,22 @@ void EditorPane::m_b_add_to_results_pressed()
 {
     // set source to the temp source
     m_target->setSourceToTempSource();
-    emit addToResultsInvoked(MorphResult(m_reference_one, m_reference_two, m_target,
-                                         m_slider_group_one->getSliderValue(ALPHA),
-                                         m_slider_group_one->getSlider(HOMOGENEOUS)->value(),
-                                         m_slider_group_one->getSlider(GAUSSIAN)->value(),
-                                         m_slider_group_one->getSlider(MEDIAN)->value(),
-                                         m_slider_group_one->getSlider(BILATERAL)->value(),
-                                         m_slider_group_two->getSlider(0)->value(),
-                                         m_slider_group_two->getSlider(1)->value(),
-                                         m_slider_group_two->getSlider(2)->value(),
-                                         m_grayscale));
+    m_target->updateId();
+    emit addToResultsInvoked(m_target);
 }
 
 void EditorPane::m_b_save_as_pressed()
 {
-    // set source to the temp source
     m_target->setSourceToTempSource();
-    qDebug() << "save as invoked";
+    auto filename = QFileDialog::getSaveFileName(this,
+                                                 tr("Save Image"),
+                                                 m_target->getImageTitle(),
+                                                 tr(".jpg"));
+    if(filename.isEmpty()) return;
+    auto save_status = m_target->getSource().save(filename + ".jpg");
+    if(save_status)
+        Console::appendToConsole("Saved morph: " + filename + ".jpg");
+    else Console::appendToConsole("Failed to save: " + filename + ".jpg");
 }
 
 void EditorPane::m_b_create_database_pressed()

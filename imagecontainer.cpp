@@ -16,14 +16,32 @@
  * @param parent
  */
 ImageContainer::ImageContainer(QWidget *parent) :
-    QLabel(parent),
-    m_contains_image(false)
+    QScrollArea(parent),
+    m_contains_image(false),
+    m_id(QUuid::createUuid())
 {
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    setScaledContents(true);
-    setFrameShape(QFrame::Box);
-    setLineWidth(1);
+    m_img_label.setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    m_img_label.setScaledContents(true);
+
+    setWidget(&m_img_label);
 }
+
+/**
+ * @brief ImageContainer::ImageContainer
+ * The default ImageContainer copy ctor
+ * @param other
+ */
+ImageContainer::ImageContainer(const ImageContainer &other) :
+    QScrollArea((QLabel*)other.parent()),
+    m_img_path(other.m_img_path),
+    m_img_title(other.m_img_title),
+    m_source(other.m_source),
+    m_temp_source(other.m_temp_source),
+    m_contains_image(other.m_contains_image),
+    m_landmark_image(other.m_landmark_image),
+    m_landmarks(other.m_landmarks),
+    m_isDisplayingLandmarks(other.m_isDisplayingLandmarks),
+    m_id(other.m_id) {}
 
 /**
  * @brief ImageContainer::mouseDoubleClickEvent
@@ -58,6 +76,7 @@ void ImageContainer::update(ImageContainer *other)
     m_landmarks = other->m_landmarks;
     m_isDisplayingLandmarks = other->m_isDisplayingLandmarks;
     setImage(m_source);
+    setToolTip(m_img_title);
 }
 
 /**
@@ -78,7 +97,9 @@ bool ImageContainer::setImageSource(const QString &path)
     m_img_title = m_img_path.toString();
     m_img_title.replace(QRegExp("(.jpg)|(.png)|(.jpeg)"),"");
     m_img_title.replace(QRegExp(".*/"),"");
-    setPixmap(QPixmap::fromImage(m_source));
+    m_img_label.resize(size());
+    m_img_label.setPixmap(QPixmap::fromImage(m_source));
+    setToolTip(m_img_title);
     return true;
 }
 
@@ -90,7 +111,9 @@ void ImageContainer::setImageSource(const QImage &source)
 {
     m_source = source.copy();
     m_contains_image = true;
-    setPixmap(QPixmap::fromImage(m_source));
+    m_img_label.resize(size());
+    m_img_label.setPixmap(QPixmap::fromImage(m_source));
+    setToolTip(m_img_title);
 }
 
 /**
@@ -101,7 +124,8 @@ void ImageContainer::setImage(const QImage &image)
 {
     m_temp_source = image;
     m_contains_image = true;
-    setPixmap(QPixmap::fromImage(m_temp_source));
+    m_img_label.resize(size());
+    m_img_label.setPixmap(QPixmap::fromImage(m_temp_source));
 }
 
 /**
@@ -109,7 +133,8 @@ void ImageContainer::setImage(const QImage &image)
  */
 void ImageContainer::setSourceToTempSource()
 {
-    m_source = m_temp_source;
+    if(!m_temp_source.isNull())
+        m_source = m_temp_source;
 }
 
 /**
@@ -211,6 +236,23 @@ void ImageContainer::toggleLandmarks()
 }
 
 /**
+ * @brief ImageContainer::updateId
+ */
+void ImageContainer::updateId()
+{
+    m_id = QUuid::createUuid();
+}
+
+/**
+ * @brief ImageContainer::getId
+ * @return
+ */
+QString ImageContainer::getId()
+{
+    return m_id.toString();
+}
+
+/**
  * @brief ImageContainer::generateLandmarkImage
  */
 void ImageContainer::generateLandmarkImage()
@@ -232,13 +274,15 @@ void ImageContainer::generateLandmarkImage()
 void ImageContainer::displayOriginal()
 {
     if(m_source.isNull()) return;
-    setPixmap(QPixmap::fromImage(m_source));
+    m_img_label.resize(size());
+    m_img_label.setPixmap(QPixmap::fromImage(m_source));
     m_isDisplayingLandmarks = false;
 }
 
 void ImageContainer::displayLandmarks()
 {
     if(m_landmark_image.isNull()) return;
-    setPixmap(QPixmap::fromImage(m_landmark_image));
+    m_img_label.resize(size());
+    m_img_label.setPixmap(QPixmap::fromImage(m_landmark_image));
     m_isDisplayingLandmarks = true;
 }

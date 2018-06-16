@@ -41,6 +41,7 @@ bool DatabasePreview::loadDatabaseFromFiles()
                                                                  tr("Load Images"),
                                                                  QDir::currentPath(),
                                                                  tr("*.jpg *.png *.jpeg"));
+    if(image_file_paths.isEmpty()) return false;
     if(!loadDatabase(image_file_paths)) return false;
     updatePreview();
     return true;
@@ -57,8 +58,9 @@ bool DatabasePreview::loadDatabaseFromDirectory()
     clearContainerAndPreview();
     QString directory_path = QFileDialog::getExistingDirectory(this,
                                                                tr("Select Database"),
-                                                               "/home",
+                                                               QDir::currentPath(),
                                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if(directory_path.isEmpty()) return false;
     QStringList image_file_paths;
     QDirIterator it(directory_path, QStringList() << "*.jpg" << "*.png" << "*.jpeg", QDir::Files);
     while(it.hasNext()) {
@@ -151,7 +153,7 @@ bool DatabasePreview::loadDatabase(const QStringList &image_file_paths)
     for(const QString & path : image_file_paths) {
         Console::appendToConsole("Adding and scaling: " + path);
         ImageContainer *image = new ImageContainer(this);
-        image->resize(m_content_pane->geometry().width(), m_content_pane->geometry().height() / 5);
+        image->setFixedSize(width(), height() / 3);
         if(!image->setImageSource(path)) return false;
         connect(image, SIGNAL(doubleClickDetected(ImageContainer*)),
                 this, SIGNAL(imageDoubleClicked(ImageContainer*)));

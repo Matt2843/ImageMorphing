@@ -36,8 +36,7 @@ SOURCES += \
         editorpane.cpp \
         imageprocessor.cpp \
     labelledslidergroup.cpp \
-    console.cpp \
-    morphresult.cpp
+    console.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -49,8 +48,7 @@ HEADERS += \
         editorpane.h \
         imageprocessor.h \
     labelledslidergroup.h \
-    console.h \
-    morphresult.h
+    console.h
 
 INCLUDEPATH += $$PWD/dlib_build/include
 

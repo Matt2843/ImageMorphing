@@ -8,12 +8,15 @@
 #include <QImage>
 #include <QPoint>
 #include <QString>
+#include <QUuid>
+#include <QScrollArea>
 
-class ImageContainer : public QLabel
+class ImageContainer : public QScrollArea
 {
     Q_OBJECT
 public:
     explicit ImageContainer(QWidget * parent = nullptr);
+    ImageContainer(const ImageContainer &other);
     ~ImageContainer() = default;
 
 public:
@@ -44,12 +47,17 @@ public:
     bool hasLandmarks();
     void toggleLandmarks();
 
+    void updateId();
+    QString getId();
+
 private:
     void generateLandmarkImage();
     void displayOriginal();
     void displayLandmarks();
 
 private:
+    QLabel m_img_label;
+
     QUrl m_img_path;
     QString m_img_title;
 
@@ -63,4 +71,5 @@ private:
 
     bool m_isDisplayingLandmarks = false;
 
+    QUuid m_id;
 };

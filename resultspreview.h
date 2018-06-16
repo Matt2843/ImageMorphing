@@ -1,8 +1,7 @@
 #pragma once
 #include "scrollableqgroupbox.h"
 
-#include "morphresult.h"
-
+class ImageContainer;
 class ResultsPreview : public ScrollableQGroupBox
 {
     Q_OBJECT
@@ -10,9 +9,11 @@ class ResultsPreview : public ScrollableQGroupBox
 public:
     explicit ResultsPreview(QWidget *parent = nullptr);
 
-public slots:
-    void addMorphResult(MorphResult result);
+signals:
+    void resultsNotEmpty();
+    void resultsEmpty();
 
-private:
-    std::vector<MorphResult> m_results;
+public slots:
+    void addMorphResult(ImageContainer*);
+    void exportResults(const char *format);
 };

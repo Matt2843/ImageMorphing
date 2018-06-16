@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QDebug>
 
+#include <QSpacerItem>
 /**
  * @brief ScrollableQGroupBox::ScrollableQGroupBox
  * The default ScrollableQGroupBox constructor
@@ -43,9 +44,10 @@ void ScrollableQGroupBox::setup(Orientation orientation)
 void ScrollableQGroupBox::updatePreview()
 {
     for(const auto & data_point : m_container) {
-        data_point->resize(m_scroll_area->width(), m_scroll_area->height() / 3);
         m_content_pane_layout->addWidget(data_point);
     }
+    QSpacerItem *spacer = new QSpacerItem(1,1,QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_content_pane_layout->addItem(spacer);
 }
 
 /**

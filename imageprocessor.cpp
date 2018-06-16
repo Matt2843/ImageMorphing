@@ -2,28 +2,28 @@
 
 #include "imagecontainer.h"
 #include "databasepreview.h"
+#include "console.h"
 
-#include <unordered_map>
+#include <string>
+#include <unordered_set>
+#include <iostream>
 
 #include <QDebug>
 #include <QImage>
+#include <QUuid>
 
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/render_face_detections.h>
 #include <dlib/image_processing.h>
-#include <dlib/gui_widgets.h>
-#include <dlib/image_io.h>
+#include <dlib/opencv/cv_image.h>
 
 /**
  * @brief ImageProcessor::ImageProcessor
- * The ImageProcessor default constructor
+ * The ImageProcessor default ctor
  * @param parent
  */
 ImageProcessor::ImageProcessor(QWidget *parent)
-    : QWidget(parent)
-{
-
-}
+    : QWidget(parent) {}
 
 /**
  * @brief ImageProcessor::getFacialFeatures
@@ -33,15 +33,17 @@ ImageProcessor::ImageProcessor(QWidget *parent)
  * @param img_path
  * @return
  */
-std::vector<QPoint> ImageProcessor::getFacialFeatures(const std::string &img_path)
+std::vector<QPoint> ImageProcessor::getFacialFeatures(ImageContainer *image)
 {
+    Console::appendToConsole("Detecting facial landmarks: " + image->getImageTitle());
     std::vector<QPoint> landmarks;
     dlib::frontal_face_detector detector = dlib::get_frontal_face_detector();
     dlib::shape_predictor sp;
     dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> sp;
 
     dlib::array2d<dlib::rgb_pixel> img;
-    dlib::load_image(img, img_path);
+    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(qImageToCVMat(image->getSource())));
+    //dlib::load_image(img, img_path);
 
     std::vector<dlib::rectangle> dets = detector(img);
     dlib::full_object_detection shape = sp(img, dets[0]);
@@ -53,10 +55,6 @@ std::vector<QPoint> ImageProcessor::getFacialFeatures(const std::string &img_pat
     for(unsigned long i = 0; i < shape.num_parts(); ++i) {
         long x = shape.part(i).x();
         long y = shape.part(i).y();
-        if(x < 0) x = 0;
-        if(x >= DatabasePreview::m_image_width) x = DatabasePreview::m_image_width - 1;
-        if(y < 0) y = 0;
-        if(y >= DatabasePreview::m_image_height) y = DatabasePreview::m_image_height - 1;
         landmarks.push_back(QPoint(x, y));
     }
 
@@ -79,8 +77,7 @@ std::vector<TriangleIndices> ImageProcessor::delaunayTriangulation(const std::ve
     cv::Subdiv2D subdiv(rect);
 
     for(auto it = indices.begin(); it != indices.end(); ++it) {
-        if(!rect.contains(*it)) std::cerr << "bounds: " << rect.size() << " attempted to insert: " << *it << std::endl;
-        subdiv.insert(*it);
+        if(rect.contains(*it)) subdiv.insert(*it);
     }
 
     std::vector<cv::Vec6f> triangleList;
@@ -145,6 +142,7 @@ void ImageProcessor::warpAndAlphaBlendTriangles(const cv::Mat &cv_ref_one,
     // Some off-set points needed:
     std::vector<cv::Point2f> cv_ref_one_offset, cv_ref_two_offset, cv_target_offset;
     std::vector<cv::Point> rect_ints;
+
     for(unsigned long i = 0; i < 3; ++i) {
         cv_target_offset.push_back(cv::Point2f(t_target[i].x - cv_morphed_image_bounding_rect.x, t_target[i].y - cv_morphed_image_bounding_rect.y));
         rect_ints.push_back(cv::Point(t_target[i].x - cv_morphed_image_bounding_rect.x, t_target[i].y - cv_morphed_image_bounding_rect.y));
@@ -198,9 +196,10 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
 
     std::vector<cv::Point2f> average_landmarks;
     std::vector<cv::Point2f> average_weighted_landmarks;
+
+    auto landmarks_r1 = ref_one->getLandmarks();
+    auto landmarks_r2 = ref_two->getLandmarks();
     for(unsigned long i = 0; i < ref_one->getLandmarks().size(); ++i) {
-        auto landmarks_r1 = ref_one->getLandmarks();
-        auto landmarks_r2 = ref_two->getLandmarks();
         float x_w = (1 - alpha) * landmarks_r1[i].x() + alpha * landmarks_r2[i].x();
         float y_w = (1 - alpha) * landmarks_r1[i].y() + alpha * landmarks_r2[i].y();
         average_weighted_landmarks.push_back(cv::Point2f(x_w, y_w));
@@ -211,36 +210,66 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
     }
 
     auto triangles = delaunayTriangulation(average_landmarks);
-    auto lm_one = ref_one->getLandmarks();
-    auto lm_two = ref_two->getLandmarks();
 
+    std::unordered_set<std::string> errors;
+    cv::Rect test(0, 0, DatabasePreview::m_image_width, DatabasePreview::m_image_height);
     for(const auto &triangle : triangles) {
         std::vector<cv::Point2f> t_one, t_two, t_target;
 
-        auto t_one_point1 = lm_one[triangle.A];
-        auto t_one_point2 = lm_one[triangle.B];
-        auto t_one_point3 = lm_one[triangle.C];
-        t_one.push_back( cv::Point2f(t_one_point1.x(), t_one_point1.y()) );
-        t_one.push_back( cv::Point2f(t_one_point2.x(), t_one_point2.y()) );
-        t_one.push_back( cv::Point2f(t_one_point3.x(), t_one_point3.y()) );
+        auto t_one_point1 = cv::Point2f(landmarks_r1[triangle.A].x(), landmarks_r1[triangle.A].y());
+        auto t_one_point2 = cv::Point2f(landmarks_r1[triangle.B].x(), landmarks_r1[triangle.B].y());
+        auto t_one_point3 = cv::Point2f(landmarks_r1[triangle.C].x(), landmarks_r1[triangle.C].y());
+        if(!test.contains(t_one_point1)) {
+            errors.insert("Landmark: " + std::to_string(triangle.A) + " is not contained in reference one, incomplete result produced.");
+            continue;
+        } else if(!test.contains(t_one_point2)) {
+            errors.insert("Landmark: " + std::to_string(triangle.B) + " is not contained in reference one, incomplete result produced.");
+            continue;
+        } else if(!test.contains(t_one_point3)) {
+            errors.insert("Landmark: " + std::to_string(triangle.C) + " is not contained in reference one, incomplete result produced.");
+            continue;
+        }
+        t_one.push_back(t_one_point1);
+        t_one.push_back(t_one_point2);
+        t_one.push_back(t_one_point3);
 
-        auto t_two_point1 = lm_two[triangle.A];
-        auto t_two_point2 = lm_two[triangle.B];
-        auto t_two_point3 = lm_two[triangle.C];
-        t_two.push_back( cv::Point2f(t_two_point1.x(), t_two_point1.y()) );
-        t_two.push_back( cv::Point2f(t_two_point2.x(), t_two_point2.y()) );
-        t_two.push_back( cv::Point2f(t_two_point3.x(), t_two_point3.y()) );
+        auto t_two_point1 = cv::Point2f(landmarks_r2[triangle.A].x(), landmarks_r2[triangle.A].y());
+        auto t_two_point2 = cv::Point2f(landmarks_r2[triangle.B].x(), landmarks_r2[triangle.B].y());
+        auto t_two_point3 = cv::Point2f(landmarks_r2[triangle.C].x(), landmarks_r2[triangle.C].y());
+        if(!test.contains(t_two_point1)) {
+            errors.insert("Landmark: " + std::to_string(triangle.A) + " is not contained in reference two, incomplete result produced.");
+            continue;
+        } else if(!test.contains(t_two_point2)) {
+            errors.insert("Landmark: " + std::to_string(triangle.B) + " is not contained in reference two, incomplete result produced.");
+            continue;
+        } else if(!test.contains(t_two_point3)) {
+            errors.insert("Landmark: " + std::to_string(triangle.C) + " is not contained in reference two, incomplete result produced.");
+            continue;
+        }
+        t_two.push_back(t_two_point1);
+        t_two.push_back(t_two_point2);
+        t_two.push_back(t_two_point3);
 
-        t_target.push_back( average_weighted_landmarks[triangle.A] );
-        t_target.push_back( average_weighted_landmarks[triangle.B] );
-        t_target.push_back( average_weighted_landmarks[triangle.C] );
+        auto t_target_point1 = average_weighted_landmarks[triangle.A];
+        auto t_target_point2 = average_weighted_landmarks[triangle.B];
+        auto t_target_point3 = average_weighted_landmarks[triangle.C];
+        if(!test.contains(t_target_point1) || !test.contains(t_target_point2) || !test.contains(t_target_point3)) {
+            continue;
+        }
+        t_target.push_back(t_target_point1);
+        t_target.push_back(t_target_point2);
+        t_target.push_back(t_target_point3);
 
         warpAndAlphaBlendTriangles(cv_ref_one, cv_ref_two, morphed_image, t_one, t_two, t_target, alpha);
     }
+    for(const auto &error : errors) {
+        Console::appendToConsole(QString::fromStdString(error));
+    }
     morphed_image.convertTo(morphed_image, CV_8UC4);
     QImage morph_result = cvMatToQImage(morphed_image);
+    QString morph_title = "(" + ref_one->getImageTitle() + ")" + "_x_" + "(" + ref_two->getImageTitle() + ")";
+    target->setImageTitle(morph_title);
     target->setImageSource(morph_result);
-    target->setImageTitle("(" + ref_one->getImageTitle() + ")" + "_x_" + "(" + ref_two->getImageTitle() + ")");
     std::vector<QPoint> morph_result_landmarks;
     for(const auto & landmark : average_weighted_landmarks) {
         morph_result_landmarks.push_back(QPoint(landmark.x, landmark.y));

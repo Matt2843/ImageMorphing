@@ -58,8 +58,12 @@ void MainWindow::setupConnections()
     connect(m_database_preview, SIGNAL(referenceImageRequest(ImageContainer*,int)),
             m_image_editor, SLOT(attemptToSetReference(ImageContainer*,int)));
 
-    connect(m_image_editor, SIGNAL(forwardMorphResult(MorphResult)),
-            m_results_preview, SLOT(addMorphResult(MorphResult)));
+    connect(m_image_editor->getEditorPane(), SIGNAL(addToResultsInvoked(ImageContainer*)),
+            m_results_preview, SLOT(addMorphResult(ImageContainer*)));
+
+    connect(m_results_preview, &ResultsPreview::resultsNotEmpty, [&](){
+        a_exportResults->setEnabled(true);
+    });
 }
 
 /**
@@ -141,6 +145,7 @@ void MainWindow::loadDatabaseFromFiles()
 void MainWindow::exportResults()
 {
     qDebug() << "export results pressed";
+    m_results_preview->exportResults("png");
 }
 
 void MainWindow::exit()

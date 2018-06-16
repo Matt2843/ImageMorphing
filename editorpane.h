@@ -1,7 +1,6 @@
 #pragma once
 
 #include "imageprocessor.h"
-#include "morphresult.h"
 
 #include <QGroupBox>
 
@@ -29,7 +28,7 @@ public:
     };
 
 signals:
-    void addToResultsInvoked(MorphResult);
+    void addToResultsInvoked(ImageContainer*);
 
 private:
     void setup();

@@ -20,9 +20,6 @@ public:
     explicit ImageEditor(QWidget *parent = nullptr);
     ~ImageEditor() = default;
 
-signals:
-    void forwardMorphResult(MorphResult);
-
 private:
     void setup();
     void setupConnections();
@@ -43,6 +40,9 @@ public:
 public slots:
     void attemptToSetReferenceByDoubleClick(ImageContainer *img);
     void attemptToSetReference(ImageContainer *img, int number);
+
+public:
+    EditorPane* getEditorPane();
 
 private:
     QVBoxLayout *m_layout;

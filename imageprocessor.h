@@ -33,7 +33,7 @@ public:
     };
 
 public:
-    std::vector<QPoint> getFacialFeatures(const std::string &img_path);
+    std::vector<QPoint> getFacialFeatures(ImageContainer *image);
     // These could be private
     std::vector<TriangleIndices> delaunayTriangulation(const std::vector<cv::Point2f> &indices);
     void affineTransform(const cv::Mat &target,
