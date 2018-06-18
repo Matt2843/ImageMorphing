@@ -64,11 +64,8 @@ LIBS += -L$$PWD/dlib_build/lib \
 
 INCLUDEPATH += $$PWD/opencv_build/include
 
-LIBS += $$PWD/opencv_build/x64/mingw/bin/libopencv_core341.dll
-LIBS += $$PWD/opencv_build/x64/mingw/bin/libopencv_highgui341.dll
-LIBS += $$PWD/opencv_build/x64/mingw/bin/libopencv_imgcodecs341.dll
-LIBS += $$PWD/opencv_build/x64/mingw/bin/libopencv_imgproc341.dll
-LIBS += $$PWD/opencv_build/x64/mingw/bin/libopencv_features2d341.dll
-LIBS += $$PWD/opencv_build/x64/mingw/bin/libopencv_calib3d341.dll
-
+LIBS += -L$$PWD/opencv_build/x64/mingw/staticlib \
+        -lopencv_imgproc341 \
+        -lopencv_core341 \
+        -lzlib
 
