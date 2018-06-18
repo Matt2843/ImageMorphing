@@ -8,7 +8,6 @@
 class DatabasePreview : public ScrollableQGroupBox
 {
     Q_OBJECT
-
 public:
     explicit DatabasePreview(QWidget * parent = nullptr);
 

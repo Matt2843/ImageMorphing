@@ -16,14 +16,14 @@
  * @param parent
  */
 ImageContainer::ImageContainer(QWidget *parent) :
-    QScrollArea(parent),
+    QLabel(parent),
     m_contains_image(false),
     m_id(QUuid::createUuid())
 {
-    m_img_label.setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    m_img_label.setScaledContents(true);
-
-    setWidget(&m_img_label);
+    setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    setScaledContents(true);
+    setFrameShape(QFrame::Box);
+    setLineWidth(1);
 }
 
 /**
@@ -32,15 +32,17 @@ ImageContainer::ImageContainer(QWidget *parent) :
  * @param other
  */
 ImageContainer::ImageContainer(const ImageContainer &other) :
-    QScrollArea((QLabel*)other.parent()),
+    QLabel((QLabel*)other.parent()),
     m_img_path(other.m_img_path),
     m_img_title(other.m_img_title),
     m_source(other.m_source),
     m_temp_source(other.m_temp_source),
+    m_grayscale_source(other.m_grayscale_source),
     m_contains_image(other.m_contains_image),
     m_landmark_image(other.m_landmark_image),
     m_landmarks(other.m_landmarks),
     m_isDisplayingLandmarks(other.m_isDisplayingLandmarks),
+    m_isDisplayingGrayscale(other.m_isDisplayingGrayscale),
     m_id(other.m_id) {}
 
 /**
@@ -71,11 +73,15 @@ void ImageContainer::update(ImageContainer *other)
     m_img_title = other->m_img_title;
     m_source = other->m_source;
     m_temp_source = other->m_temp_source;
+    m_grayscale_source = other->m_grayscale_source;
     m_contains_image = other->m_contains_image;
     m_landmark_image = other->m_landmark_image;
     m_landmarks = other->m_landmarks;
     m_isDisplayingLandmarks = other->m_isDisplayingLandmarks;
-    setImage(m_source);
+    m_isDisplayingGrayscale = other->m_isDisplayingGrayscale;
+    if(m_isDisplayingGrayscale)
+        setImage(m_grayscale_source);
+    else setImage(m_temp_source);
     setToolTip(m_img_title);
 }
 
@@ -92,13 +98,14 @@ bool ImageContainer::setImageSource(const QString &path)
     m_source = m_source.scaled(DatabasePreview::m_image_width, DatabasePreview::m_image_height,
                                Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     m_temp_source = m_source;
+    m_grayscale_source = m_source.convertToFormat(QImage::Format_Grayscale8);
     m_contains_image = true;
     m_img_path = path;
     m_img_title = m_img_path.toString();
     m_img_title.replace(QRegExp("(.jpg)|(.png)|(.jpeg)"),"");
     m_img_title.replace(QRegExp(".*/"),"");
-    m_img_label.resize(size());
-    m_img_label.setPixmap(QPixmap::fromImage(m_source));
+    resize(size());
+    setPixmap(QPixmap::fromImage(m_source));
     setToolTip(m_img_title);
     return true;
 }
@@ -110,9 +117,12 @@ bool ImageContainer::setImageSource(const QString &path)
 void ImageContainer::setImageSource(const QImage &source)
 {
     m_source = source.copy();
+    m_temp_source = m_source;
+    m_grayscale_source = source.convertToFormat(QImage::Format_Grayscale8);
     m_contains_image = true;
-    m_img_label.resize(size());
-    m_img_label.setPixmap(QPixmap::fromImage(m_source));
+    m_isDisplayingGrayscale = false;
+    resize(size());
+    setPixmap(QPixmap::fromImage(m_source));
     setToolTip(m_img_title);
 }
 
@@ -123,9 +133,10 @@ void ImageContainer::setImageSource(const QImage &source)
 void ImageContainer::setImage(const QImage &image)
 {
     m_temp_source = image;
+    m_grayscale_source = m_temp_source.convertToFormat(QImage::Format_Grayscale8);
     m_contains_image = true;
-    m_img_label.resize(size());
-    m_img_label.setPixmap(QPixmap::fromImage(m_temp_source));
+    resize(size());
+    setPixmap(QPixmap::fromImage(m_temp_source));
 }
 
 /**
@@ -143,8 +154,27 @@ void ImageContainer::setSourceToTempSource()
  */
 QImage ImageContainer::getSource()
 {
-    return m_source.copy();
+    return m_source;
 }
+
+/**
+ * @brief ImageContainer::getTempSource
+ * @return
+ */
+QImage ImageContainer::getTempSource()
+{
+    return m_temp_source;
+}
+
+/**
+ * @brief ImageContainer::getGrayscaleSource
+ * @return
+ */
+QImage ImageContainer::getGrayscaleSource()
+{
+    return m_grayscale_source;
+}
+
 /**
  * @brief ImageContainer::getImagePath
  * @return
@@ -224,6 +254,20 @@ bool ImageContainer::hasLandmarks()
 }
 
 /**
+ * @brief ImageContainer::hasBadLandmarks
+ * @return
+ */
+bool ImageContainer::hasBadLandmarks()
+{
+    if(m_landmarks.empty()) return true; // no landmarks to iterate
+    QRect test(0, 0, DatabasePreview::m_image_width, DatabasePreview::m_image_height);
+    for(const auto &point : m_landmarks) {
+        if(!test.contains(point)) return true;
+    }
+    return false;
+}
+
+/**
  * @brief ImageContainer::toggleLandmarks
  */
 void ImageContainer::toggleLandmarks()
@@ -233,6 +277,27 @@ void ImageContainer::toggleLandmarks()
     } else {
         displayLandmarks();
     }
+}
+
+void ImageContainer::isDisplayingGrayscale(bool b)
+{
+    m_isDisplayingGrayscale = b;
+}
+
+void ImageContainer::reset()
+{
+    m_img_path = 0;
+    m_img_title = "";
+    m_source.fill(Qt::white);
+    m_temp_source.fill(Qt::white);
+    m_grayscale_source.fill(Qt::white);
+    m_contains_image = false;
+    m_landmark_image.fill(Qt::transparent);
+    m_isDisplayingLandmarks = false;
+    m_isDisplayingGrayscale = false;
+    m_id = 0;
+
+    setPixmap(QPixmap::fromImage(m_source));
 }
 
 /**
@@ -260,13 +325,19 @@ void ImageContainer::generateLandmarkImage()
     QImage res(m_source.size(), QImage::Format_ARGB32);
     QPainter painter(&res);
     QPen pen;
-    pen.setColor("#d8d788");
     pen.setCapStyle(Qt::RoundCap);
-    pen.setWidth(4);
+
     painter.setPen(pen);
     painter.drawImage(QRect(0, 0, res.width(), res.height()), m_source, QRect(0, 0, res.width(), res.height()));
     for(const QPoint & landmark : m_landmarks) {
-        painter.drawPoint(landmark.x(), landmark.y());
+        pen.setColor(Qt::blue);
+        pen.setWidth(1);
+        painter.setPen(pen);
+        painter.drawEllipse(landmark, 5, 5);
+        pen.setColor(Qt::red);
+        pen.setWidth(2);
+        painter.setPen(pen);
+        painter.drawPoint(landmark);
     }
     m_landmark_image = res;
 }
@@ -274,15 +345,24 @@ void ImageContainer::generateLandmarkImage()
 void ImageContainer::displayOriginal()
 {
     if(m_source.isNull()) return;
-    m_img_label.resize(size());
-    m_img_label.setPixmap(QPixmap::fromImage(m_source));
+    resize(size());
+    setPixmap(QPixmap::fromImage(m_source));
     m_isDisplayingLandmarks = false;
+    m_isDisplayingGrayscale = false;
 }
 
 void ImageContainer::displayLandmarks()
 {
     if(m_landmark_image.isNull()) return;
-    m_img_label.resize(size());
-    m_img_label.setPixmap(QPixmap::fromImage(m_landmark_image));
+    resize(size());
+    setPixmap(QPixmap::fromImage(m_landmark_image));
     m_isDisplayingLandmarks = true;
+}
+
+void ImageContainer::displayGrayscale()
+{
+    if(m_grayscale_source.isNull()) return;
+    resize(size());
+    setPixmap(QPixmap::fromImage(m_grayscale_source));
+    m_isDisplayingGrayscale = true;
 }

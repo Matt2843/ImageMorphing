@@ -15,6 +15,7 @@ private:
 
 public:
     static void appendToConsole(const QString &text);
+    static void clearConsole();
 
 private:
     static QPlainTextEdit *console;

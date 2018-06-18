@@ -11,11 +11,7 @@
 #include <QDebug>
 #include <QImage>
 #include <QUuid>
-
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_processing/render_face_detections.h>
-#include <dlib/image_processing.h>
-#include <dlib/opencv/cv_image.h>
+#include <QProgressDialog>
 
 /**
  * @brief ImageProcessor::ImageProcessor
@@ -23,7 +19,10 @@
  * @param parent
  */
 ImageProcessor::ImageProcessor(QWidget *parent)
-    : QWidget(parent) {}
+    : QWidget(parent)
+{
+    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> sp;
+}
 
 /**
  * @brief ImageProcessor::getFacialFeatures
@@ -35,18 +34,26 @@ ImageProcessor::ImageProcessor(QWidget *parent)
  */
 std::vector<QPoint> ImageProcessor::getFacialFeatures(ImageContainer *image)
 {
+    #define FACE_DOWNSAMPLE_RATIO 2
     Console::appendToConsole("Detecting facial landmarks: " + image->getImageTitle());
     std::vector<QPoint> landmarks;
     dlib::frontal_face_detector detector = dlib::get_frontal_face_detector();
-    dlib::shape_predictor sp;
-    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> sp;
 
+    cv::Mat cv_img = img2mat(image->getSource());
     dlib::array2d<dlib::rgb_pixel> img;
-    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(qImageToCVMat(image->getSource())));
-    //dlib::load_image(img, img_path);
+    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(cv_img));
 
-    std::vector<dlib::rectangle> dets = detector(img);
-    dlib::full_object_detection shape = sp(img, dets[0]);
+    cv::Mat image_small;
+    cv::resize(cv_img, image_small, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
+
+    dlib::cv_image<dlib::bgr_pixel> dlib_small(image_small);
+
+    std::vector<dlib::rectangle> faces = detector(dlib_small);
+    dlib::rectangle rect((long)(faces[0].left()   * FACE_DOWNSAMPLE_RATIO),
+                         (long)(faces[0].top()    * FACE_DOWNSAMPLE_RATIO),
+                         (long)(faces[0].right()  * FACE_DOWNSAMPLE_RATIO),
+                         (long)(faces[0].bottom() * FACE_DOWNSAMPLE_RATIO));
+    dlib::full_object_detection shape = sp(img, rect);
 
     if(shape.num_parts() < 68) {
         qWarning() << "failed to get 68 facial landmarks";
@@ -186,8 +193,8 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
                                  ImageContainer *target,
                                  float alpha)
 {
-    cv::Mat cv_ref_one = qImageToCVMat(ref_one->getSource());
-    cv::Mat cv_ref_two = qImageToCVMat(ref_two->getSource());
+    cv::Mat cv_ref_one = img2mat(ref_one->getSource());
+    cv::Mat cv_ref_two = img2mat(ref_two->getSource());
 
     cv_ref_one.convertTo(cv_ref_one, CV_32F);
     cv_ref_two.convertTo(cv_ref_two, CV_32F);
@@ -266,7 +273,7 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
         Console::appendToConsole(QString::fromStdString(error));
     }
     morphed_image.convertTo(morphed_image, CV_8UC4);
-    QImage morph_result = cvMatToQImage(morphed_image);
+    QImage morph_result = mat2img(morphed_image);
     QString morph_title = "(" + ref_one->getImageTitle() + ")" + "_x_" + "(" + ref_two->getImageTitle() + ")";
     target->setImageTitle(morph_title);
     target->setImageSource(morph_result);
@@ -287,8 +294,7 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
 void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
 {
     if(intensity <= 2) return;
-    cv::Mat before = QImageToMat(target, CV_8UC3);
-    //cv::Mat before = qImageToCVMat(target);
+    cv::Mat before = img2mat(target);
     cv::Mat destination = cv::Mat::zeros(target.height(),
                                          target.width(),
                                          before.type());
@@ -319,21 +325,62 @@ void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
         before.convertTo(destination, -1, 1, intensity);
         break;
     }
-    target = MatToQImage(destination, QImage::Format_RGB888);
-    //target = cvMatToQImage(destination);
+    target = MatToQImage(destination, QImage::Format_RGB888).rgbSwapped();
+}
+
+/**
+ * @brief ImageProcessor::fourierTransform
+ * @param target
+ */
+void ImageProcessor::fourierTransform(QImage &target)
+{
+    cv::Mat cv_img = img2mat(target.convertToFormat(QImage::Format_Grayscale8));
+    cv::Mat padded_cv_img;
+    int m = cv::getOptimalDFTSize(cv_img.rows);
+    int n = cv::getOptimalDFTSize(cv_img.cols);
+    cv::copyMakeBorder(cv_img, padded_cv_img, 0, m - cv_img.rows, 0, n - cv_img.cols, cv::BORDER_CONSTANT, cv::Scalar::all(0));
+    cv::Mat planes[] = {cv::Mat_<float>(padded_cv_img), cv::Mat::zeros(padded_cv_img.size(), CV_32F)};
+    cv::Mat complexI;
+    cv::merge(planes, 2, complexI);
+
+    cv::dft(complexI, complexI);
+
+    cv::split(complexI, planes);
+    cv::magnitude(planes[0], planes[1], planes[0]);
+    cv::Mat magI = planes[0];
+
+    magI += cv::Scalar::all(1);
+    cv::log(magI, magI);
+
+    magI = magI(cv::Rect(0, 0, magI.cols & -2, magI.rows & -2));
+
+    int cx = magI.cols/2;
+    int cy = magI.rows/2;
+
+    cv::Mat q0(magI, cv::Rect(0, 0, cx, cy));
+    cv::Mat q1(magI, cv::Rect(cx, 0, cx, cy));
+    cv::Mat q2(magI, cv::Rect(0, cy, cx, cy));
+    cv::Mat q3(magI, cv::Rect(cx, cy, cx, cy));
+
+    cv::Mat tmp;
+    q0.copyTo(tmp);
+    q3.copyTo(q0);
+    tmp.copyTo(q3);
+
+    q1.copyTo(tmp);
+    q2.copyTo(q1);
+    tmp.copyTo(q2);
+
+    cv::normalize(magI, magI, 0, 255, CV_MINMAX);
+    magI.convertTo(magI, CV_8UC3);
+
+    target = mat2img(magI);
 }
 
 QImage ImageProcessor::MatToQImage(const cv::Mat &mat, QImage::Format format)
 {
     return QImage(mat.data, mat.cols, mat.rows,
                   mat.step, format).copy();
-}
-
-cv::Mat ImageProcessor::QImageToMat(const QImage &img, int format)
-{
-    return cv::Mat(img.height(), img.width(), format,
-                   const_cast<uchar*>(img.bits()),
-                   img.bytesPerLine()).clone();
 }
 
 /**
@@ -344,7 +391,7 @@ cv::Mat ImageProcessor::QImageToMat(const QImage &img, int format)
  * @param copy
  * @return
  */
-cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
+cv::Mat ImageProcessor::img2mat(const QImage &qimg, bool copy)
 {
     cv::Mat image;
     if(qimg.format() == QImage::Format_ARGB32 || qimg.format() == QImage::Format_ARGB32_Premultiplied) {
@@ -358,7 +405,7 @@ cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
     } else if(qimg.format() == QImage::Format_RGB888) {
         QImage swap_rgb_qimage = qimg.rgbSwapped();
         image = cv::Mat(swap_rgb_qimage.height(), swap_rgb_qimage.width(), CV_8UC3, const_cast<uchar*>(swap_rgb_qimage.bits()), static_cast<std::size_t>(swap_rgb_qimage.bytesPerLine())).clone();
-    } else if(qimg.format() == QImage::Format_Indexed8) {
+    } else if(qimg.format() == QImage::Format_Grayscale8) {
         cv::Mat cvimg(qimg.height(), qimg.width(), CV_8UC1, const_cast<uchar*>(qimg.bits()), static_cast<std::size_t>(qimg.bytesPerLine()));
         image = copy ? cvimg.clone() : cvimg;
     }
@@ -372,7 +419,7 @@ cv::Mat ImageProcessor::qImageToCVMat(const QImage &qimg, bool copy)
  * @param img
  * @return
  */
-QImage ImageProcessor::cvMatToQImage(const cv::Mat &img)
+QImage ImageProcessor::mat2img(const cv::Mat &img)
 {
     QImage image;
     if(img.type() == CV_8UC4) {

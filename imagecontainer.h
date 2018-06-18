@@ -11,7 +11,7 @@
 #include <QUuid>
 #include <QScrollArea>
 
-class ImageContainer : public QScrollArea
+class ImageContainer : public QLabel
 {
     Q_OBJECT
 public:
@@ -35,6 +35,8 @@ public:
     void setImage(const QImage &image);
     void setSourceToTempSource();
     QImage getSource();
+    QImage getTempSource();
+    QImage getGrayscaleSource();
 
     QUrl getImagePath();
     QString getImageTitle();
@@ -45,24 +47,30 @@ public:
     void setLandmarks(const std::vector<QPoint> & landmarks, bool extra_landmarks = true);
     std::vector<QPoint> getLandmarks();
     bool hasLandmarks();
+    bool hasBadLandmarks();
     void toggleLandmarks();
+    void isDisplayingGrayscale(bool);
+
+    void reset();
 
     void updateId();
     QString getId();
 
-private:
-    void generateLandmarkImage();
+public:
     void displayOriginal();
     void displayLandmarks();
+    void displayGrayscale();
 
 private:
-    QLabel m_img_label;
+    void generateLandmarkImage();
 
+private:
     QUrl m_img_path;
     QString m_img_title;
 
     QImage m_source;
     QImage m_temp_source;
+    QImage m_grayscale_source;
 
     bool m_contains_image;
 
@@ -70,6 +78,7 @@ private:
     std::vector<QPoint> m_landmarks;
 
     bool m_isDisplayingLandmarks = false;
-
+    bool m_isDisplayingGrayscale = false;
     QUuid m_id;
+
 };

@@ -23,8 +23,7 @@ public:
     ~EditorPane() = default;
 
     enum SLIDERS {
-        ALPHA, HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL,
-        SHARPNESS, CONTRAST, BRIGHTNESS
+        ALPHA, HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL
     };
 
 signals:
@@ -39,20 +38,15 @@ public:
     void setMorphReady(bool ready = true);
     void toggleFilters(bool on);
     void resetSliders();
+    void resetAll();
 
 public slots:
     void m_morph_target_b_pressed();
     void applyFilters(QImage &img) const;
 
 private slots:
-    void smoothMorph(int alpha);
-    void smoothHomogeneous(int intensity);
-    void smoothGaussian(int intensity);
-    void smoothMedian(int intensity);
-    void smoothBilateral(int intensity);
-    void smoothSharpness(int intensity);
-    void smoothContrast(int intensity);
-    void smoothBrightness(int intensity);
+    void smoothMorph();
+    void smoothFilters();
 
     void m_r_normal_selected();
     void m_r_grayscale_selected();
@@ -60,7 +54,6 @@ private slots:
 
     void m_b_add_to_results_pressed();
     void m_b_save_as_pressed();
-    void m_b_create_database_pressed();
 
 private:
     QHBoxLayout *m_layout;
@@ -79,10 +72,7 @@ private:
 
     QPushButton *m_b_add_to_results;
     QPushButton *m_b_save_as;
-    QPushButton *m_b_create_database;
 
     LabelledSliderGroup *m_slider_group_one;
     LabelledSliderGroup *m_slider_group_two;
-
-    bool m_grayscale;
 };

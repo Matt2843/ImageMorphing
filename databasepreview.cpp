@@ -71,7 +71,6 @@ bool DatabasePreview::loadDatabaseFromDirectory()
     return true;
 }
 
-
 /**
  * @brief imageResolutionDialog
  * @return
@@ -153,7 +152,7 @@ bool DatabasePreview::loadDatabase(const QStringList &image_file_paths)
     for(const QString & path : image_file_paths) {
         Console::appendToConsole("Adding and scaling: " + path);
         ImageContainer *image = new ImageContainer(this);
-        image->setFixedSize(width(), height() / 3);
+        image->setFixedSize(width() - width() / 4.6, height() / 3);
         if(!image->setImageSource(path)) return false;
         connect(image, SIGNAL(doubleClickDetected(ImageContainer*)),
                 this, SIGNAL(imageDoubleClicked(ImageContainer*)));

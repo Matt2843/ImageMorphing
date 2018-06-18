@@ -26,6 +26,8 @@ private:
 
 protected:
     void updatePreview();
+
+public slots:
     void clearContainerAndPreview();
 
 protected:

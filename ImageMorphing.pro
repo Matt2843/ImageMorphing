@@ -35,8 +35,9 @@ SOURCES += \
         resultspreview.cpp \
         editorpane.cpp \
         imageprocessor.cpp \
-    labelledslidergroup.cpp \
-    console.cpp
+        labelledslidergroup.cpp \
+        console.cpp \
+        morphdatabasedialog.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -47,8 +48,14 @@ HEADERS += \
         resultspreview.h \
         editorpane.h \
         imageprocessor.h \
-    labelledslidergroup.h \
-    console.h
+        labelledslidergroup.h \
+        console.h \
+        morphdatabasedialog.h
+
+INCLUDEPATH += $$PWD/OpenBLAS/include
+
+LIBS += -L$$PWD/OpenBLAS/lib \
+        -lopenblas
 
 INCLUDEPATH += $$PWD/dlib_build/include
 

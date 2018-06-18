@@ -92,7 +92,6 @@ void LabelledSliderGroup::toggleSliders(unsigned long from, unsigned long to, bo
 {
     for(unsigned int i = from; i <= to; ++i) {
         m_sliders[i]->setEnabled(on);
-        if(!on) m_sliders[i]->setValue(0);
     }
 }
 

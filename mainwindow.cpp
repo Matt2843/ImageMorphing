@@ -1,5 +1,10 @@
 #include "mainwindow.h"
 
+#include "morphdatabasedialog.h"
+#include "databasepreview.h"
+#include "imageeditor.h"
+#include "resultspreview.h"
+
 #include <QDebug>
 #include <QMenuBar>
 #include <QScreen>
@@ -99,7 +104,6 @@ void MainWindow::createActions()
 
     a_generateMorphDatabase = new QAction(tr("Generate Morph-Database"), this);
     a_generateMorphDatabase->setStatusTip("Automate the morphing process");
-    a_generateMorphDatabase->setEnabled(false);
     connect(a_generateMorphDatabase, &QAction::triggered, this, &MainWindow::generateMorphDatabase);
 
     a_about = new QAction(tr("About"), this);
@@ -127,36 +131,35 @@ void MainWindow::createMenus()
 
 void MainWindow::newProject()
 {
-    qDebug() << "new project pressed";
+    m_database_preview->clearContainerAndPreview();
+    m_results_preview->clearContainerAndPreview();
+    m_image_editor->resetAll();
 }
 
 void MainWindow::loadDatabaseFromDirectory()
 {
-    qDebug() << "load database from directory pressed";
     m_database_preview->loadDatabaseFromDirectory();
 }
 
 void MainWindow::loadDatabaseFromFiles()
 {
-    qDebug() << "load database from files pressed";
     m_database_preview->loadDatabaseFromFiles();
 }
 
 void MainWindow::exportResults()
 {
-    qDebug() << "export results pressed";
-    m_results_preview->exportResults("png");
+    m_results_preview->exportResults("jpg");
 }
 
 void MainWindow::exit()
 {
-    qDebug() << "exit pressed";
     QApplication::instance()->quit();
 }
 
 void MainWindow::generateMorphDatabase()
 {
-    qDebug() << "generate morph database pressed";
+    MorphDatabaseDialog d;
+    d.exec();
 }
 
 void MainWindow::about()

@@ -190,6 +190,7 @@ void ImageEditor::testMorphConditions()
 void ImageEditor::setReferenceOne(ImageContainer *ref_one)
 {
     m_editor_pane->toggleFilters(false);
+    m_editor_pane->resetSliders();
     m_reference_one->update(ref_one);
     if(m_reference_one->hasLandmarks()) {
         m_ref_one_detect_facial_landmarks_b->setEnabled(false);
@@ -209,6 +210,7 @@ void ImageEditor::setReferenceOne(ImageContainer *ref_one)
 void ImageEditor::setReferenceTwo(ImageContainer *ref_two)
 {
     m_editor_pane->toggleFilters(false);
+    m_editor_pane->resetSliders();
     m_reference_two->update(ref_two);
     if(m_reference_two->hasLandmarks()) {
         m_ref_two_detect_facial_landmarks_b->setEnabled(false);
@@ -250,6 +252,25 @@ void ImageEditor::attemptToSetReference(ImageContainer *img, int number)
     } else if (number == 2) {
         setReferenceTwo(img);
     }
+}
+
+/**
+ * @brief ImageEditor::resetAll
+ */
+void ImageEditor::resetAll()
+{
+    m_editor_pane->resetAll();
+
+    m_ref_one_detect_facial_landmarks_b->setEnabled(true);
+    m_ref_two_detect_facial_landmarks_b->setEnabled(true);
+    m_ref_one_toggle_facial_landmarks_b->setEnabled(false);
+    m_ref_two_toggle_facial_landmarks_b->setEnabled(false);
+    m_morph_target_b->setEnabled(false);
+    m_target_toggle_facial_landmarks_b->setEnabled(false);
+
+    m_reference_one->reset();
+    m_reference_two->reset();
+    m_target->reset();
 }
 
 /**

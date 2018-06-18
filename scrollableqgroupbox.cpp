@@ -1,9 +1,7 @@
 #include "scrollableqgroupbox.h"
 
 #include <QHBoxLayout>
-#include <QDebug>
 
-#include <QSpacerItem>
 /**
  * @brief ScrollableQGroupBox::ScrollableQGroupBox
  * The default ScrollableQGroupBox constructor
@@ -46,8 +44,6 @@ void ScrollableQGroupBox::updatePreview()
     for(const auto & data_point : m_container) {
         m_content_pane_layout->addWidget(data_point);
     }
-    QSpacerItem *spacer = new QSpacerItem(1,1,QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_content_pane_layout->addItem(spacer);
 }
 
 /**

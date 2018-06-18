@@ -21,9 +21,9 @@
 // and a BLAS and LAPACK library.  To do this you need to uncomment the following #defines.
 #define DLIB_JPEG_SUPPORT
 #define DLIB_PNG_SUPPORT
-/* #undef DLIB_GIF_SUPPORT */
+#define DLIB_GIF_SUPPORT
 /* #undef DLIB_USE_FFTW */
-/* #undef DLIB_USE_BLAS */
+#define DLIB_USE_BLAS
 /* #undef DLIB_USE_LAPACK */
 /* #undef DLIB_USE_CUDA */
 /* #undef DLIB_USE_MKL_FFT */

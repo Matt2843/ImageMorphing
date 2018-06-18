@@ -11,6 +11,11 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing/render_face_detections.h>
+#include <dlib/image_processing.h>
+#include <dlib/opencv/cv_image.h>
+
 struct TriangleIndices
 {
     unsigned long A;
@@ -53,11 +58,13 @@ public:
                      ImageContainer *target,
                      float alpha);
     void applyFilter(QImage &target, Filter filter, int intensity);
+    void fourierTransform(QImage &target);
 
 public:
     QImage MatToQImage(const cv::Mat &mat, QImage::Format format);
-    cv::Mat QImageToMat(const QImage &img, int format);
+    cv::Mat img2mat(const QImage &qimg, bool copy = true);
+    QImage mat2img(const cv::Mat &img);
 
-    cv::Mat qImageToCVMat(const QImage &qimg, bool copy = true);
-    QImage cvMatToQImage(const cv::Mat &img);
+private:
+    dlib::shape_predictor sp;
 };

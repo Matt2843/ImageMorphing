@@ -40,6 +40,7 @@ public:
 public slots:
     void attemptToSetReferenceByDoubleClick(ImageContainer *img);
     void attemptToSetReference(ImageContainer *img, int number);
+    void resetAll();
 
 public:
     EditorPane* getEditorPane();

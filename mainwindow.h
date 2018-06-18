@@ -2,17 +2,15 @@
 
 #include <QMainWindow>
 
-#include "databasepreview.h"
-#include "imageeditor.h"
-#include "editorpane.h"
-#include "resultspreview.h"
-
 #include <QMenu>
 #include <QAction>
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
+class DatabasePreview;
+class ImageEditor;
+class ResultsPreview;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

@@ -40,3 +40,11 @@ void Console::appendToConsole(const QString &text)
 {
     console->appendPlainText(text);
 }
+
+/**
+ * @brief Console::clearConsole
+ */
+void Console::clearConsole()
+{
+    console->clear();
+}

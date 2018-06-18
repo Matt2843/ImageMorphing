@@ -30,9 +30,7 @@ EditorPane::EditorPane(QWidget *parent,
     m_r_grayscale(new QRadioButton("Grayscale", this)),
     m_r_fourier(new QRadioButton("Fourier", this)),
     m_b_add_to_results(new QPushButton("Add to results", this)),
-    m_b_save_as(new QPushButton("Save as", this)),
-    m_b_create_database(new QPushButton("Create database", this)),
-    m_grayscale(false)
+    m_b_save_as(new QPushButton("Save as", this))
 {
     setup();
     setupConnections();
@@ -45,7 +43,6 @@ void EditorPane::setup()
 {
     m_b_add_to_results->setEnabled(false);
     m_b_save_as->setEnabled(false);
-    m_b_create_database->setEnabled(false);
 
     m_r_normal->setChecked(true);
     m_r_normal->setEnabled(false);
@@ -76,12 +73,8 @@ void EditorPane::setup()
     col_two_layout->addWidget(m_radio_buttons_container);
     col_two_layout->addWidget(m_slider_group_two);
 
-    QHBoxLayout *col_two_double_button_layout = new QHBoxLayout();
-    col_two_double_button_layout->addWidget(m_b_add_to_results);
-    col_two_double_button_layout->addWidget(m_b_save_as);
-    col_two_layout->addLayout(col_two_double_button_layout);
-
-    col_two_layout->addWidget(m_b_create_database);
+    col_two_layout->addWidget(m_b_add_to_results);
+    col_two_layout->addWidget(m_b_save_as);
 
     m_layout->addLayout(col_two_layout);
     m_layout->setSpacing(0);
@@ -94,39 +87,43 @@ void EditorPane::setup()
 void EditorPane::setupConnections()
 {
     connect(m_slider_group_one->getSlider(ALPHA), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothMorph(int)));
+            this, SLOT(smoothMorph()));
 
     connect(m_slider_group_one->getSlider(HOMOGENEOUS), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothHomogeneous(int)));
+            this, SLOT(smoothFilters()));
 
     connect(m_slider_group_one->getSlider(GAUSSIAN), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothGaussian(int)));
+            this, SLOT(smoothFilters()));
 
     connect(m_slider_group_one->getSlider(MEDIAN), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothMedian(int)));
+            this, SLOT(smoothFilters()));
 
     connect(m_slider_group_one->getSlider(BILATERAL), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothBilateral(int)));
+            this, SLOT(smoothFilters()));
 
     connect(m_slider_group_two->getSlider(0), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothSharpness(int)));
+            this, SLOT(smoothFilters()));
 
     connect(m_slider_group_two->getSlider(1), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothContrast(int)));
+            this, SLOT(smoothFilters()));
 
     connect(m_slider_group_two->getSlider(2), SIGNAL(sliderMoved(int)),
-            this, SLOT(smoothBrightness(int)));
+            this, SLOT(smoothFilters()));
 
+    connect(m_r_normal, SIGNAL(toggled(bool)),
+            this, SLOT(m_r_normal_selected()));
 
+    connect(m_r_grayscale, SIGNAL(toggled(bool)),
+            this, SLOT(m_r_grayscale_selected()));
+
+    connect(m_r_fourier, SIGNAL(toggled(bool)),
+            this, SLOT(m_r_fourier_selected()));
 
     connect(m_b_add_to_results, SIGNAL(released()),
             this, SLOT(m_b_add_to_results_pressed()));
 
     connect(m_b_save_as, SIGNAL(released()),
             this, SLOT(m_b_save_as_pressed()));
-
-    connect(m_b_create_database, SIGNAL(released()),
-            this, SLOT(m_b_create_database_pressed()));
 }
 
 /**
@@ -159,13 +156,28 @@ void EditorPane::toggleFilters(bool on)
     m_slider_group_two->toggleSliders(0, 2, on);
     m_b_add_to_results->setEnabled(on);
     m_b_save_as->setEnabled(on);
-    m_b_create_database->setEnabled(on);
+    m_r_normal->setEnabled(on);
+    m_r_grayscale->setEnabled(on);
+    m_r_fourier->setEnabled(on);
 }
 
 void EditorPane::resetSliders()
 {
     m_slider_group_one->resetSliders(HOMOGENEOUS, BILATERAL);
     m_slider_group_two->resetSliders(0, 2);
+}
+
+void EditorPane::resetAll()
+{
+    m_slider_group_one->toggleSliders(ALPHA, BILATERAL, false);
+    m_slider_group_two->toggleSliders(0, 2, false);
+    resetSliders();
+    m_r_normal->setChecked(true);
+    m_r_normal->setEnabled(false);
+    m_r_grayscale->setEnabled(false);
+    m_r_fourier->setEnabled(false);
+    m_b_add_to_results->setEnabled(false);
+    m_b_save_as->setEnabled(false);
 }
 
 /**
@@ -177,6 +189,7 @@ void EditorPane::m_morph_target_b_pressed()
                                    m_reference_two,
                                    m_target,
                                    m_slider_group_one->getSliderValue(ALPHA));
+    m_r_normal->setChecked(true);
     toggleFilters(true);
 }
 
@@ -184,135 +197,88 @@ void EditorPane::m_morph_target_b_pressed()
  * @brief EditorPane::smoothMorph
  * @param alpha
  */
-void EditorPane::smoothMorph(int alpha)
+void EditorPane::smoothMorph()
 {
     if(!m_reference_one->hasImage()         ||
        !m_reference_one->hasLandmarks()     ||
        !m_reference_two->hasImage()         ||
        !m_reference_two->hasLandmarks()) return;
-    resetSliders();
     m_image_processor->morphImages(m_reference_one,
                                    m_reference_two,
                                    m_target,
-                                   (float)alpha / 100);
+                                   m_slider_group_one->getSliderValue(ALPHA));
+    smoothFilters();
 }
 
 void EditorPane::applyFilters(QImage &img) const
 {
     if(!m_target->hasImage()) return;
     m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::HOMOGENEOUS,
-                                   m_slider_group_one->getSlider(HOMOGENEOUS)->value());
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::GAUSSIAN,
-                                   m_slider_group_one->getSlider(GAUSSIAN)->value());
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::MEDIAN,
-                                   m_slider_group_one->getSlider(MEDIAN)->value());
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::BILATERAL,
-                                   m_slider_group_one->getSlider(BILATERAL)->value());
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::SHARPNESS,
-                                   m_slider_group_two->getSlider(0)->value());
+                                   ImageProcessor::Filter::BRIGHTNESS,
+                                   m_slider_group_two->getSlider(2)->value());
     m_image_processor->applyFilter(img,
                                    ImageProcessor::Filter::CONTRAST,
                                    m_slider_group_two->getSlider(1)->value());
     m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::BRIGHTNESS,
-                                   m_slider_group_two->getSlider(2)->value());
-}
-
-void EditorPane::smoothHomogeneous(int intensity)
-{
-    QImage img = m_target->getSource();
-    applyFilters(img);
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::HOMOGENEOUS,
-                                   intensity);
-    m_target->setImage(img);
-}
-
-void EditorPane::smoothGaussian(int intensity)
-{
-    QImage img = m_target->getSource();
-    applyFilters(img);
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::GAUSSIAN,
-                                   intensity);
-    m_target->setImage(img);
-}
-
-void EditorPane::smoothMedian(int intensity)
-{
-    QImage img = m_target->getSource();
-    applyFilters(img);
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::MEDIAN,
-                                   intensity);
-    m_target->setImage(img);
-}
-
-void EditorPane::smoothBilateral(int intensity)
-{
-    QImage img = m_target->getSource();
-    applyFilters(img);
+                                   ImageProcessor::Filter::SHARPNESS,
+                                   m_slider_group_two->getSlider(0)->value());
     m_image_processor->applyFilter(img,
                                    ImageProcessor::Filter::BILATERAL,
-                                   intensity);
-    m_target->setImage(img);
+                                   m_slider_group_one->getSlider(BILATERAL)->value());
+    m_image_processor->applyFilter(img,
+                                   ImageProcessor::Filter::MEDIAN,
+                                   m_slider_group_one->getSlider(MEDIAN)->value());
+    m_image_processor->applyFilter(img,
+                                   ImageProcessor::Filter::GAUSSIAN,
+                                   m_slider_group_one->getSlider(GAUSSIAN)->value());
+    m_image_processor->applyFilter(img,
+                                   ImageProcessor::Filter::HOMOGENEOUS,
+                                   m_slider_group_one->getSlider(HOMOGENEOUS)->value());
 }
 
-void EditorPane::smoothSharpness(int intensity)
+void EditorPane::smoothFilters()
 {
     QImage img = m_target->getSource();
     applyFilters(img);
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::SHARPNESS,
-                                   intensity);
     m_target->setImage(img);
-}
-
-void EditorPane::smoothContrast(int intensity)
-{
-    QImage img = m_target->getSource();
-    applyFilters(img);
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::CONTRAST,
-                                   intensity);
-    m_target->setImage(img);
-}
-
-void EditorPane::smoothBrightness(int intensity)
-{
-    QImage img = m_target->getSource();
-    applyFilters(img);
-    m_image_processor->applyFilter(img,
-                                   ImageProcessor::Filter::BRIGHTNESS,
-                                   intensity);
-    m_target->setImage(img);
+    if(m_r_grayscale->isChecked()) {
+        m_target->displayGrayscale();
+    } else if(m_r_fourier->isChecked()) {
+        m_target->isDisplayingGrayscale(false);
+        m_image_processor->fourierTransform(img);
+        m_target->setImage(img);
+    }
 }
 
 void EditorPane::m_r_normal_selected()
 {
-
+    if(m_r_normal->isChecked()) {
+        m_target->isDisplayingGrayscale(false);
+        smoothFilters();
+    }
 }
 
 void EditorPane::m_r_grayscale_selected()
 {
-
+    if(m_r_grayscale->isChecked()) {
+        smoothFilters();
+        m_target->displayGrayscale();
+    }
 }
 
 void EditorPane::m_r_fourier_selected()
 {
-
+    if(m_r_fourier->isChecked()) {
+        m_target->isDisplayingGrayscale(false);
+        smoothFilters();
+        QImage img = m_target->getTempSource();
+        m_image_processor->fourierTransform(img);
+        m_target->setImage(img);
+    }
 }
 
 void EditorPane::m_b_add_to_results_pressed()
 {
-    // set source to the temp source
-    m_target->setSourceToTempSource();
-    m_target->updateId();
     emit addToResultsInvoked(m_target);
 }
 
@@ -328,11 +294,6 @@ void EditorPane::m_b_save_as_pressed()
     if(save_status)
         Console::appendToConsole("Saved morph: " + filename + ".jpg");
     else Console::appendToConsole("Failed to save: " + filename + ".jpg");
-}
-
-void EditorPane::m_b_create_database_pressed()
-{
-    qDebug() << "create database invoked";
 }
 
 
