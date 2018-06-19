@@ -24,7 +24,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
@@ -53,19 +52,15 @@ HEADERS += \
         morphdatabasedialog.h
 
 INCLUDEPATH += $$PWD/OpenBLAS/include
-
 LIBS += -L$$PWD/OpenBLAS/lib \
         -lopenblas
 
 INCLUDEPATH += $$PWD/dlib_build/include
-
 LIBS += -L$$PWD/dlib_build/lib \
         -ldlib
 
 INCLUDEPATH += $$PWD/opencv_build/include
-
 LIBS += -L$$PWD/opencv_build/x64/mingw/staticlib \
         -lopencv_imgproc341 \
         -lopencv_core341 \
         -lzlib
-
