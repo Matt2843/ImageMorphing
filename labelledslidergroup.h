@@ -3,19 +3,18 @@
 
 #include <vector>
 
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-
-#include <QLabel>
-#include <QSlider>
 #include <QString>
 #include <QStringList>
 
+class QLabel;
+class QSlider;
+class QHBoxLayout;
+class QVBoxLayout;
 class LabelledSliderGroup : public QWidget
 {
     Q_OBJECT
 public:
-    LabelledSliderGroup(const QStringList &labels, QWidget *parent = nullptr, Qt::Orientation orientation = Qt::Horizontal);
+    LabelledSliderGroup(const QStringList &labels, Qt::Orientation orientation = Qt::Horizontal, QWidget *parent = nullptr);
     ~LabelledSliderGroup() = default;
 
 private:
@@ -23,13 +22,15 @@ private:
 
 public:
     void setLabelText(unsigned long which, const QString &text, Qt::AlignmentFlag flag = Qt::AlignLeft);
-    QSlider* getSlider(unsigned long which);
-    float getSliderValue(unsigned long which);
     void toggleSliders(unsigned long from, unsigned long to, bool on);
     void resetSliders(unsigned long from, unsigned long to);
 
 private slots:
     void setSliderToolTip(int val, unsigned long which);
+
+public:
+    QSlider* getSlider(unsigned long which);
+    float getSliderValue(unsigned long which);
 
 private:
     Qt::Orientation m_orientation;

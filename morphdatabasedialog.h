@@ -1,28 +1,28 @@
 #pragma once
 #include <QDialog>
 
-#include "imagecontainer.h"
-#include "labelledslidergroup.h"
 #include "imageprocessor.h"
 
 #include <vector>
-
 #include <QString>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QButtonGroup>
-#include <QRadioButton>
-#include <QGroupBox>
-#include <QLineEdit>
-#include <QCheckBox>
 
+class QLabel;
+class ImageContainer;
+class LabelledSliderGroup;
+class QVBoxLayout;
+class QHBoxLayout;
+class QPushButton;
+class QButtonGroup;
+class QRadioButton;
+class QGroupBox;
+class QLineEdit;
+class QCheckBox;
 class MorphDatabaseDialog : public QDialog
 {
     Q_OBJECT
 public:
     MorphDatabaseDialog(QWidget *parent = nullptr, ImageContainer *preview = nullptr);
-    ~MorphDatabaseDialog();
+    ~MorphDatabaseDialog() = default;
 
 private:
     void setup();

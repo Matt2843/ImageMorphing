@@ -1,8 +1,8 @@
 #include "imageprocessor.h"
 
 #include "imagecontainer.h"
-#include "databasepreview.h"
 #include "console.h"
+#include "globals.h"
 
 #include <string>
 #include <unordered_set>
@@ -12,30 +12,47 @@
 #include <QImage>
 #include <QUuid>
 #include <QProgressDialog>
+#include <QCoreApplication>
+#include <QString>
 
 /**
  * @brief ImageProcessor::ImageProcessor
- * The ImageProcessor default ctor
+ *
+ * The ImageProcessor default ctor, deserializing the shape_predictor_68_face_landmarks.dat training set to
+ * perform facial feature extraction in 1 millisecond according:
+ *
+ * https://www.semanticscholar.org/paper/One-millisecond-face-alignment-with-an-ensemble-of-Kazemi-Sullivan/1824b1ccace464ba275ccc86619feaa89018c0ad
+ * https://github.com/davisking/dlib-models
+ *
  * @param parent
  */
 ImageProcessor::ImageProcessor(QWidget *parent)
     : QWidget(parent)
 {
-    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> sp;
+    QString path = QCoreApplication::applicationDirPath() + "/" + "shape_predictor_68_face_landmarks.dat";
+    dlib::deserialize(path.toStdString()) >> sp;
 }
 
 /**
  * @brief ImageProcessor::getFacialFeatures
- * A procedure invoking the dlib's frontal_face_detector to
- * detect faces in the image specifed by img_path. Futhermore
- * the dlib shape_predictor is used to extract facial landmarks.
+ *
+ * A procedure invoking the dlib's frontal_face_detector to detect faces in the image specifed by img_path. Futhermore
+ * the dlib shape_predictor is used to extract facial landmarks. The bottleneck of this routine is the face detection
+ * procedure, which has been optimized by the method displayed in:
+ *
+ * https://www.learnopencv.com/speeding-up-dlib-facial-landmark-detector/
+ *
+ * Furthermore for future extension https://github.com/nenadmarkus/pico/ would dramatically increase the face
+ * detection procedure.
+ *
  * @param img_path
  * @return
  */
 std::vector<QPoint> ImageProcessor::getFacialFeatures(ImageContainer *image)
 {
     #define FACE_DOWNSAMPLE_RATIO 2
-    Console::appendToConsole("Detecting facial landmarks: " + image->getImageTitle());
+    if(fmg::Globals::gui)
+        Console::appendToConsole("Detecting facial landmarks: " + image->getImageTitle());
     std::vector<QPoint> landmarks;
     dlib::frontal_face_detector detector = dlib::get_frontal_face_detector();
 
@@ -69,124 +86,18 @@ std::vector<QPoint> ImageProcessor::getFacialFeatures(ImageContainer *image)
 }
 
 /**
- * @brief ImageProcessor::delaunayTriangulation
- * @param indices
- * @return
- */
-std::vector<TriangleIndices> ImageProcessor::delaunayTriangulation(const std::vector<cv::Point2f> &indices)
-{
-    auto lookup = [&](const cv::Point2f &point){
-        return (unsigned long)(std::find(indices.begin(), indices.end(), point) - indices.begin());
-    };
-
-    // Create the bounds for the Subdiv2D region
-    cv::Rect rect(0, 0, DatabasePreview::m_image_width, DatabasePreview::m_image_height);
-    cv::Subdiv2D subdiv(rect);
-
-    for(auto it = indices.begin(); it != indices.end(); ++it) {
-        if(rect.contains(*it)) subdiv.insert(*it);
-    }
-
-    std::vector<cv::Vec6f> triangleList;
-    subdiv.getTriangleList(triangleList);
-
-    std::vector<TriangleIndices> triangle_indices;
-    for(auto it = triangleList.begin(); it != triangleList.end(); ++it) {
-        auto triangle = *it;
-        auto one = lookup(cv::Point2f(triangle[0], triangle[1]));
-        auto two = lookup(cv::Point2f(triangle[2], triangle[3]));
-        auto three = lookup(cv::Point2f(triangle[4], triangle[5]));
-
-        // quick test to avoid pushing the fake triangles from Subdiv2d.
-        if(one == indices.size() || two == indices.size() || three == indices.size()) continue;
-
-        triangle_indices.push_back({one, two, three});
-    }
-    return triangle_indices;
-}
-
-/**
- * @brief ImageProcessor::affineTransform
- * An auxillary function to affine transform two cv::Mat
- * @param target
- * @param source
- * @param source_triangles
- * @param target_triangles
- */
-void ImageProcessor::affineTransform(const cv::Mat &target,
-                                     const cv::Mat &source,
-                                     const std::vector<cv::Point2f> &source_triangles,
-                                     const std::vector<cv::Point2f> &target_triangles)
-{
-    cv::Mat warped = cv::getAffineTransform(source_triangles, target_triangles);
-    cv::warpAffine(source, target, warped, target.size(), cv::INTER_LINEAR, cv::BORDER_REFLECT_101);
-}
-
-/**
- * @brief ImageProcessor::warpAndAlphaBlendTriangles
- * A procedure to morph two images
- * Replica implementation of https://www.learnopencv.com/face-morph-using-opencv-cpp-python/
- * @param cv_ref_one
- * @param cv_ref_two
- * @param morphed_image
- * @param t_one
- * @param t_two
- * @param t_target
- * @param alpha
- */
-void ImageProcessor::warpAndAlphaBlendTriangles(const cv::Mat &cv_ref_one,
-                                                const cv::Mat &cv_ref_two,
-                                                const cv::Mat &morphed_image,
-                                                const std::vector<cv::Point2f> &t_one,
-                                                const std::vector<cv::Point2f> &t_two,
-                                                const std::vector<cv::Point2f> &t_target,
-                                                float alpha)
-{
-    cv::Rect cv_morphed_image_bounding_rect = cv::boundingRect(t_target);
-    cv::Rect cv_ref_one_bounding_rect = cv::boundingRect(t_one);
-    cv::Rect cv_ref_two_bounding_rect = cv::boundingRect(t_two);
-
-    // Some off-set points needed:
-    std::vector<cv::Point2f> cv_ref_one_offset, cv_ref_two_offset, cv_target_offset;
-    std::vector<cv::Point> rect_ints;
-
-    for(unsigned long i = 0; i < 3; ++i) {
-        cv_target_offset.push_back(cv::Point2f(t_target[i].x - cv_morphed_image_bounding_rect.x, t_target[i].y - cv_morphed_image_bounding_rect.y));
-        rect_ints.push_back(cv::Point(t_target[i].x - cv_morphed_image_bounding_rect.x, t_target[i].y - cv_morphed_image_bounding_rect.y));
-        cv_ref_one_offset.push_back(cv::Point2f(t_one[i].x - cv_ref_one_bounding_rect.x, t_one[i].y - cv_ref_one_bounding_rect.y));
-        cv_ref_two_offset.push_back(cv::Point2f(t_two[i].x - cv_ref_two_bounding_rect.x, t_two[i].y - cv_ref_two_bounding_rect.y));
-    }
-
-    cv::Mat mask = cv::Mat::zeros(cv_morphed_image_bounding_rect.height, cv_morphed_image_bounding_rect.width, CV_32FC3);
-    cv::fillConvexPoly(mask, rect_ints, cv::Scalar(1.0, 1.0, 1.0), 16, 0);
-
-    cv::Mat cv_ref_one_rect, cv_ref_two_rect;
-    cv_ref_one(cv_ref_one_bounding_rect).copyTo(cv_ref_one_rect);
-    cv_ref_two(cv_ref_two_bounding_rect).copyTo(cv_ref_two_rect);
-
-    cv::Mat warp_ref_one = cv::Mat::zeros(cv_morphed_image_bounding_rect.height,
-                                          cv_morphed_image_bounding_rect.width,
-                                          cv_ref_one_rect.type());
-    cv::Mat warp_ref_two = cv::Mat::zeros(cv_morphed_image_bounding_rect.height,
-                                          cv_morphed_image_bounding_rect.width,
-                                          cv_ref_two_rect.type());
-
-    affineTransform(warp_ref_one, cv_ref_one_rect, cv_ref_one_offset, cv_target_offset);
-    affineTransform(warp_ref_two, cv_ref_two_rect, cv_ref_two_offset, cv_target_offset);
-
-    cv::Mat image_rect = (1.0 - alpha) * warp_ref_one + alpha * warp_ref_two;
-
-    cv::multiply(image_rect, mask, image_rect);
-    cv::multiply(morphed_image(cv_morphed_image_bounding_rect), cv::Scalar(1.0, 1.0, 1.0) - mask, morphed_image(cv_morphed_image_bounding_rect));
-
-    morphed_image(cv_morphed_image_bounding_rect) += image_rect;
-}
-
-/**
  * @brief ImageProcessor::morphImages
- * @param ref_one
- * @param ref_two
- * @return
+ *
+ * A routine to morph two the images contained in two ImageContainers to one image.
+ * The routine calculates the average facial landmarks, triangulates the result,
+ * translates the triangulation to the reference landmarks and finally warps and alpha
+ * blends the resulting triangle sets into one morphed image. This procedure is described
+ * in detail in the term paper.
+ *
+ * @param ref_one the ImageContainer of the Reference One image
+ * @param ref_two the ImageContainer of the Reference Two image
+ * @param target
+ * @param alpha the alpha-blend value 0-1
  */
 void ImageProcessor::morphImages(ImageContainer *ref_one,
                                  ImageContainer *ref_two,
@@ -206,7 +117,8 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
 
     auto landmarks_r1 = ref_one->getLandmarks();
     auto landmarks_r2 = ref_two->getLandmarks();
-    for(unsigned long i = 0; i < ref_one->getLandmarks().size(); ++i) {
+
+    for(unsigned long i = 0; i < landmarks_r1.size(); ++i) {
         float x_w = (1 - alpha) * landmarks_r1[i].x() + alpha * landmarks_r2[i].x();
         float y_w = (1 - alpha) * landmarks_r1[i].y() + alpha * landmarks_r2[i].y();
         average_weighted_landmarks.push_back(cv::Point2f(x_w, y_w));
@@ -216,10 +128,10 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
         average_landmarks.push_back(cv::Point2f(x_a, y_a));
     }
 
-    auto triangles = delaunayTriangulation(average_landmarks);
+    auto triangles = delaunayTriangulation(average_landmarks, fmg::Globals::img_width, fmg::Globals::img_height);
 
     std::unordered_set<std::string> errors;
-    cv::Rect test(0, 0, DatabasePreview::m_image_width, DatabasePreview::m_image_height);
+    cv::Rect test(0, 0, fmg::Globals::img_width, fmg::Globals::img_height);
     for(const auto &triangle : triangles) {
         std::vector<cv::Point2f> t_one, t_two, t_target;
 
@@ -269,8 +181,10 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
 
         warpAndAlphaBlendTriangles(cv_ref_one, cv_ref_two, morphed_image, t_one, t_two, t_target, alpha);
     }
-    for(const auto &error : errors) {
-        Console::appendToConsole(QString::fromStdString(error));
+    if(fmg::Globals::gui) {
+        for(const auto &error : errors) {
+            Console::appendToConsole(QString::fromStdString(error));
+        }
     }
     morphed_image.convertTo(morphed_image, CV_8UC4);
     QImage morph_result = mat2img(morphed_image);
@@ -284,12 +198,15 @@ void ImageProcessor::morphImages(ImageContainer *ref_one,
     target->setLandmarks(morph_result_landmarks, false);
 }
 
-
-
 /**
- * @brief ImageProcessor::normalFilter
- * @param target
- * @param intensity
+ * @brief ImageProcessor::applyFilter
+ *
+ * A procedure to apply a filter specified by the Filter enum, to the target QImage with the
+ * given intensity.
+ *
+ * @param target the reference to the QImage
+ * @param filter the Filter to be applied
+ * @param intensity the intensity of the filter.
  */
 void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
 {
@@ -330,6 +247,12 @@ void ImageProcessor::applyFilter(QImage &target, Filter filter, int intensity)
 
 /**
  * @brief ImageProcessor::fourierTransform
+ *
+ * A procedure to transform the target QImage from the spatial domain to the frequency domain
+ * via a discrete fourier transform routine offered by OpenCV.
+ *
+ * https://docs.opencv.org/2.4.13.4/doc/tutorials/core/discrete_fourier_transform/discrete_fourier_transform.html
+ *
  * @param target
  */
 void ImageProcessor::fourierTransform(QImage &target)
@@ -377,6 +300,141 @@ void ImageProcessor::fourierTransform(QImage &target)
     target = mat2img(magI);
 }
 
+/**
+ * @brief ImageProcessor::delaunayTriangulation
+ *
+ * A triangulation procedure, given a set of facial landmarks, the procedure performs delaunay triangulation
+ * to create regions of interest in the average-landmark domain.
+ *
+ * @param indices a set of facial landmarks
+ * @param width a bound for the cv::Subdiv2D routine
+ * @param height a bound for the cv::Subdiv2D routine
+ * @return std::vector<TriangleIndices> a translation of triangle coordinates to triangle indices.
+ */
+std::vector<TriangleIndices> ImageProcessor::delaunayTriangulation(const std::vector<cv::Point2f> &indices,
+                                                                   int width, int height)
+{
+    auto lookup = [&](const cv::Point2f &point){
+        return (unsigned long)(std::find(indices.begin(), indices.end(), point) - indices.begin());
+    };
+
+    // Create the bounds for the Subdiv2D region
+    cv::Rect rect(0, 0, width, height);
+    cv::Subdiv2D subdiv(rect);
+
+    for(auto it = indices.begin(); it != indices.end(); ++it) {
+        if(rect.contains(*it)) subdiv.insert(*it);
+    }
+
+    std::vector<cv::Vec6f> triangleList;
+    subdiv.getTriangleList(triangleList);
+
+    std::vector<TriangleIndices> triangle_indices;
+    for(auto it = triangleList.begin(); it != triangleList.end(); ++it) {
+        auto triangle = *it;
+        auto one = lookup(cv::Point2f(triangle[0], triangle[1]));
+        auto two = lookup(cv::Point2f(triangle[2], triangle[3]));
+        auto three = lookup(cv::Point2f(triangle[4], triangle[5]));
+
+        // quick test to avoid pushing the fake triangles from Subdiv2d.
+        if(one == indices.size() || two == indices.size() || three == indices.size()) continue;
+
+        triangle_indices.push_back({one, two, three});
+    }
+    return triangle_indices;
+}
+
+/**
+ * @brief ImageProcessor::affineTransform
+ *
+ * An private convenience class method to invoke cv::warpAffine()
+ *
+ * @param target the morph target
+ * @param source the reference source
+ * @param source_triangles the results of the interpreted source triangulation
+ * @param target_triangles the results of the target triangulation
+ */
+void ImageProcessor::affineTransform(const cv::Mat &target,
+                                     const cv::Mat &source,
+                                     const std::vector<cv::Point2f> &source_triangles,
+                                     const std::vector<cv::Point2f> &target_triangles)
+{
+    cv::Mat warped = cv::getAffineTransform(source_triangles, target_triangles);
+    cv::warpAffine(source, target, warped, target.size(), cv::INTER_LINEAR, cv::BORDER_REFLECT_101);
+}
+
+/**
+ * @brief ImageProcessor::warpAndAlphaBlendTriangles
+ *
+ * A routine to alpha blend and warp triangles from two sources into the target source. Creating
+ * a more detailed morph result than a traditional alpha-blend.
+ *
+ * Replica implementation of https://www.learnopencv.com/face-morph-using-opencv-cpp-python/
+ *
+ * @param cv_ref_one reference one image in cv::Mat format
+ * @param cv_ref_two reference two image in cv::Mat format
+ * @param morphed_image target image in cv::Mat format
+ * @param t_one triangulation results of cv_ref_one
+ * @param t_two triangulation results of cv_ref_two
+ * @param t_target triangulation results of morphed_image
+ * @param alpha the degree in which the alpha-blend should be applied
+ */
+void ImageProcessor::warpAndAlphaBlendTriangles(const cv::Mat &cv_ref_one,
+                                                const cv::Mat &cv_ref_two,
+                                                const cv::Mat &morphed_image,
+                                                const std::vector<cv::Point2f> &t_one,
+                                                const std::vector<cv::Point2f> &t_two,
+                                                const std::vector<cv::Point2f> &t_target,
+                                                float alpha)
+{
+    cv::Rect cv_morphed_image_bounding_rect = cv::boundingRect(t_target);
+    cv::Rect cv_ref_one_bounding_rect = cv::boundingRect(t_one);
+    cv::Rect cv_ref_two_bounding_rect = cv::boundingRect(t_two);
+
+    std::vector<cv::Point2f> cv_ref_one_offset, cv_ref_two_offset, cv_target_offset;
+    std::vector<cv::Point> rect_ints;
+
+    for(unsigned long i = 0; i < 3; ++i) {
+        cv_target_offset.push_back(cv::Point2f(t_target[i].x - cv_morphed_image_bounding_rect.x, t_target[i].y - cv_morphed_image_bounding_rect.y));
+        rect_ints.push_back(cv::Point(t_target[i].x - cv_morphed_image_bounding_rect.x, t_target[i].y - cv_morphed_image_bounding_rect.y));
+        cv_ref_one_offset.push_back(cv::Point2f(t_one[i].x - cv_ref_one_bounding_rect.x, t_one[i].y - cv_ref_one_bounding_rect.y));
+        cv_ref_two_offset.push_back(cv::Point2f(t_two[i].x - cv_ref_two_bounding_rect.x, t_two[i].y - cv_ref_two_bounding_rect.y));
+    }
+
+    cv::Mat mask = cv::Mat::zeros(cv_morphed_image_bounding_rect.height, cv_morphed_image_bounding_rect.width, CV_32FC3);
+    cv::fillConvexPoly(mask, rect_ints, cv::Scalar(1.0, 1.0, 1.0), 16, 0);
+
+    cv::Mat cv_ref_one_rect, cv_ref_two_rect;
+    cv_ref_one(cv_ref_one_bounding_rect).copyTo(cv_ref_one_rect);
+    cv_ref_two(cv_ref_two_bounding_rect).copyTo(cv_ref_two_rect);
+
+    cv::Mat warp_ref_one = cv::Mat::zeros(cv_morphed_image_bounding_rect.height,
+                                          cv_morphed_image_bounding_rect.width,
+                                          cv_ref_one_rect.type());
+    cv::Mat warp_ref_two = cv::Mat::zeros(cv_morphed_image_bounding_rect.height,
+                                          cv_morphed_image_bounding_rect.width,
+                                          cv_ref_two_rect.type());
+
+    affineTransform(warp_ref_one, cv_ref_one_rect, cv_ref_one_offset, cv_target_offset);
+    affineTransform(warp_ref_two, cv_ref_two_rect, cv_ref_two_offset, cv_target_offset);
+
+    cv::Mat image_rect = (1.0 - alpha) * warp_ref_one + alpha * warp_ref_two;
+
+    cv::multiply(image_rect, mask, image_rect);
+    cv::multiply(morphed_image(cv_morphed_image_bounding_rect), cv::Scalar(1.0, 1.0, 1.0) - mask, morphed_image(cv_morphed_image_bounding_rect));
+
+    morphed_image(cv_morphed_image_bounding_rect) += image_rect;
+}
+
+/**
+ * @brief ImageProcessor::MatToQImage
+ *
+ * A private rescue-method used in some cases for a specfic cv::Mat to QImage conversion.
+ *
+ * @param mat
+ * @param format
+ * @return
+ */
 QImage ImageProcessor::MatToQImage(const cv::Mat &mat, QImage::Format format)
 {
     return QImage(mat.data, mat.cols, mat.rows,
@@ -385,11 +443,13 @@ QImage ImageProcessor::MatToQImage(const cv::Mat &mat, QImage::Format format)
 
 /**
  * @brief ImageProcessor::qImageToCVMat
+ *
  * A procedure to convert a QImage to a cv::Mat
  * The procedure is inspired by: https://asmaloney.com/2013/11/code/converting-between-cvmat-and-qimage-or-qpixmap/
- * @param qimg
- * @param copy
- * @return
+ *
+ * @param qimg imput image
+ * @param copy specifies if the procedure should return a copy
+ * @return the converted image
  */
 cv::Mat ImageProcessor::img2mat(const QImage &qimg, bool copy)
 {
@@ -414,10 +474,12 @@ cv::Mat ImageProcessor::img2mat(const QImage &qimg, bool copy)
 
 /**
  * @brief ImageProcessor::cvMatToQImage
+ *
  * A procedure to convert a cv::Mat to a QImage
  * The procedure is inspired by: https://asmaloney.com/2013/11/code/converting-between-cvmat-and-qimage-or-qpixmap/
- * @param img
- * @return
+ *
+ * @param img input image
+ * @return converted image
  */
 QImage ImageProcessor::mat2img(const cv::Mat &img)
 {

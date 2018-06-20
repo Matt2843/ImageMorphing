@@ -3,18 +3,28 @@
 #include "console.h"
 #include "imagecontainer.h"
 
-#include <QFileDialog>
-#include <QDebug>
-
 #include <QMenu>
 #include <QAction>
+#include <QFileDialog>
+#include <QMouseEvent>
 
+/**
+ * @brief ResultsPreview::ResultsPreview
+ *
+ * The default ResultsPreview ctor, constructing the parent ScrollableQGroupBox.
+ *
+ * @param parent the Qt parent widget
+ */
 ResultsPreview::ResultsPreview(QWidget * parent) :
-    ScrollableQGroupBox(parent, "Results Preview", ScrollableQGroupBox::Vertical)
-{
+    ScrollableQGroupBox(parent, "Results Preview", ScrollableQGroupBox::Vertical) {}
 
-}
-
+/**
+ * @brief ResultsPreview::addMorphResult
+ *
+ * A public SLOT to add a finished morph result to the ResultsPreview view.
+ *
+ * @param image the image to be added to the view
+ */
 void ResultsPreview::addMorphResult(ImageContainer *image)
 {
     ImageContainer *container = new ImageContainer(this);
@@ -28,6 +38,14 @@ void ResultsPreview::addMorphResult(ImageContainer *image)
     emit resultsNotEmpty();
 }
 
+/**
+ * @brief ResultsPreview::removeMorphResult
+ *
+ * A public SLOT invoked when the user right-clicks a ImageContainer in the ResultsPreview view.
+ *
+ * @param img the image to be removed from the view
+ * @param event the QMouseEvent used for tooltip positioning
+ */
 void ResultsPreview::removeMorphResult(ImageContainer *img, QMouseEvent *event)
 {
     QMenu *popup = new QMenu(this);
@@ -43,6 +61,15 @@ void ResultsPreview::removeMorphResult(ImageContainer *img, QMouseEvent *event)
     }
 }
 
+/**
+ * @brief ResultsPreview::exportResults
+ *
+ * The procedure invoked when the "Export Results" menu action is invoked by the application-user.
+ * The procedure exports all contained results to a directory selected by the application-user and
+ * saves the results according to the const char *format input parameter.
+ *
+ * @param format ".png" or ".jpg"
+ */
 void ResultsPreview::exportResults(const char *format)
 {
     auto directory_path = QFileDialog::getExistingDirectory(this,

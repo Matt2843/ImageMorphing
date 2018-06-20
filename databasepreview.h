@@ -1,9 +1,5 @@
 #pragma once
-#include <QGroupBox>
-
 #include "scrollableqgroupbox.h"
-
-#include <QMouseEvent>
 
 class DatabasePreview : public ScrollableQGroupBox
 {
@@ -19,13 +15,11 @@ public slots:
     bool loadDatabaseFromFiles();
     bool loadDatabaseFromDirectory();
 
-private:
-    bool loadDatabase(const QStringList &image_file_paths);
-
 private slots:
     void imageRightClickInvoked(ImageContainer *img, QMouseEvent *event);
 
-public:
-    static int m_image_width;
-    static int m_image_height;
+private:
+    bool loadDatabase(const QStringList &image_file_paths);
+    void scanImageResolutions(const QStringList &image_file_paths);
+    bool imageResolutionDialog();
 };

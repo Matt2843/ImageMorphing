@@ -2,13 +2,15 @@
 #include <QGroupBox>
 
 #include <QString>
-#include <QPlainTextEdit>
 
+class QHBoxLayout;
+class QPlainTextEdit;
 class Console : public QGroupBox
 {
     Q_OBJECT
 public:
-    Console(QWidget * parent = nullptr);
+    explicit Console(QWidget * parent = nullptr);
+    ~Console() = default;
 
 private:
     void setup();
@@ -18,5 +20,6 @@ public:
     static void clearConsole();
 
 private:
+    QHBoxLayout *m_layout;
     static QPlainTextEdit *console;
 };

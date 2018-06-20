@@ -1,37 +1,34 @@
 #pragma once
-
-#include "imageprocessor.h"
-
 #include <QGroupBox>
 
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QPushButton>
-#include <QButtonGroup>
-#include <QRadioButton>
-
 class ImageContainer;
+class ImageProcessor;
 class LabelledSliderGroup;
+class QHBoxLayout;
+class QVBoxLayout;
+class QPushButton;
+class QButtonGroup;
+class QRadioButton;
 class EditorPane : public QGroupBox
 {
     Q_OBJECT
 public:
-    explicit EditorPane(QWidget *parent = nullptr,
-                        ImageContainer *m_reference_one = nullptr,
-                        ImageContainer *m_reference_two = nullptr,
-                        ImageContainer *m_target = nullptr);
+    explicit EditorPane(ImageContainer *ref_one = nullptr,
+                        ImageContainer *ref_two = nullptr,
+                        ImageContainer *target = nullptr,
+                        QWidget *parent = nullptr);
     ~EditorPane() = default;
 
     enum SLIDERS {
         ALPHA, HOMOGENEOUS, GAUSSIAN, MEDIAN, BILATERAL
     };
 
-signals:
-    void addToResultsInvoked(ImageContainer*);
-
 private:
     void setup();
     void setupConnections();
+
+signals:
+    void addToResultsInvoked(ImageContainer*);
 
 public:
     bool detectLandmarks(ImageContainer *img);
@@ -51,7 +48,6 @@ private slots:
     void m_r_normal_selected();
     void m_r_grayscale_selected();
     void m_r_fourier_selected();
-
     void m_b_add_to_results_pressed();
     void m_b_save_as_pressed();
 
@@ -64,6 +60,8 @@ private:
 
     ImageProcessor *m_image_processor;
 
+    QVBoxLayout *m_col_two_layout;
+    QHBoxLayout *m_radio_buttons_layout;
     QGroupBox *m_radio_buttons_container;
     QButtonGroup *m_radio_buttons;
     QRadioButton *m_r_normal;

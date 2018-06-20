@@ -1,22 +1,39 @@
 #include "console.h"
+#include <QDebug>
 
-#include <QHBoxLayout>
 #include <QFont>
+#include <QHBoxLayout>
+#include <QPlainTextEdit>
 
+/**
+ * @brief Console::console
+ *
+ * Definition of the static console QPlainTextEdit member.
+ *
+ */
 QPlainTextEdit *Console::console = nullptr;
+
 /**
  * @brief Console::Console
- * The default console ctor
- * @param parent
+ *
+ * The Console ctor setting up the Qt widgets for this
+ * GUI container.
+ *
+ * @param parent the Qt parent container.
  */
 Console::Console(QWidget *parent) :
-    QGroupBox("Console", parent)
+    QGroupBox("Console", parent),
+    m_layout(new QHBoxLayout)
 {
     setup();
 }
 
 /**
  * @brief Console::setup
+ *
+ * A private convenience method for setting up the layout and
+ * internal widgets of this container.
+ *
  */
 void Console::setup()
 {
@@ -34,6 +51,9 @@ void Console::setup()
 
 /**
  * @brief Console::appendToConsole
+ *
+ * A public method to append text to the static console
+ *
  * @param text
  */
 void Console::appendToConsole(const QString &text)
@@ -43,6 +63,9 @@ void Console::appendToConsole(const QString &text)
 
 /**
  * @brief Console::clearConsole
+ *
+ * A public method to clear the static console
+ *
  */
 void Console::clearConsole()
 {

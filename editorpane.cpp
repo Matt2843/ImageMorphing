@@ -1,29 +1,45 @@
 #include "editorpane.h"
+#include <QDebug>
 
 #include "imagecontainer.h"
+#include "imageprocessor.h"
 #include "labelledslidergroup.h"
 #include "console.h"
 
-#include <QDebug>
 #include <QStringList>
 #include <QFileDialog>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QButtonGroup>
+#include <QRadioButton>
+#include <QSlider>
 #include <QFile>
 
 /**
  * @brief EditorPane::EditorPane
- * The default EditorPane constructor
- * @param parent
+ *
+ * The EditorPane ctor, constructs the controls for the ImageEditor
+ * class such as alpha-blend slider, filtering sliders, post-processing
+ * transformations GUI widgets.
+ *
+ * @param ref_one the reference one image container passed by ImageEditor
+ * @param ref_two the reference two image container passed by ImageEditor
+ * @param target the morph target image container passed by ImageEditor
+ * @param parent the Qt widgets parent of this widget.
  */
-EditorPane::EditorPane(QWidget *parent,
-                       ImageContainer *m_reference_one,
-                       ImageContainer *m_reference_two,
-                       ImageContainer *m_target) :
+EditorPane::EditorPane(ImageContainer *ref_one,
+                       ImageContainer *ref_two,
+                       ImageContainer *target,
+                       QWidget *parent) :
     QGroupBox("Editor Pane", parent),
-    m_layout(new QHBoxLayout()),
-    m_reference_one(m_reference_one),
-    m_reference_two(m_reference_two),
-    m_target(m_target),
+    m_layout(new QHBoxLayout),
+    m_reference_one(ref_one),
+    m_reference_two(ref_two),
+    m_target(target),
     m_image_processor(new ImageProcessor(this)),
+    m_col_two_layout(new QVBoxLayout),
+    m_radio_buttons_layout(new QHBoxLayout),
     m_radio_buttons_container(new QGroupBox("Transform", this)),
     m_radio_buttons(new QButtonGroup(this)),
     m_r_normal(new QRadioButton("Normal", this)),
@@ -38,6 +54,9 @@ EditorPane::EditorPane(QWidget *parent,
 
 /**
  * @brief EditorPane::setup
+ *
+ * A private convenience method for setting up the layout and internal widgets of this container.
+ *
  */
 void EditorPane::setup()
 {
@@ -51,38 +70,39 @@ void EditorPane::setup()
 
     QStringList slider_group_one_labels;
     slider_group_one_labels << "alpha" << "Homogeneous Filter" << "Gaussian Filter" << "Median Filter" << "Bilateral Filter";
-    m_slider_group_one = new LabelledSliderGroup(slider_group_one_labels, this);
+    m_slider_group_one = new LabelledSliderGroup(slider_group_one_labels, Qt::Horizontal, this);
     m_slider_group_one->getSlider(ALPHA)->setValue(50);
     m_slider_group_one->getSlider(BILATERAL)->setRange(0,50);
     m_layout->addWidget(m_slider_group_one);
 
-    QVBoxLayout *col_two_layout = new QVBoxLayout();
     QStringList slider_group_two_labels;
     slider_group_two_labels << "Sharpness" << "Contrast" << "Brightness";
-    m_slider_group_two = new LabelledSliderGroup(slider_group_two_labels, this);
+    m_slider_group_two = new LabelledSliderGroup(slider_group_two_labels, Qt::Horizontal, this);
 
     m_radio_buttons->addButton(m_r_normal);
     m_radio_buttons->addButton(m_r_grayscale);
     m_radio_buttons->addButton(m_r_fourier);
 
-    QHBoxLayout *radio_buttons_layout = new QHBoxLayout();
-    radio_buttons_layout->addWidget(m_r_normal, 1, Qt::AlignCenter);
-    radio_buttons_layout->addWidget(m_r_grayscale, 1, Qt::AlignCenter);
-    radio_buttons_layout->addWidget(m_r_fourier, 1, Qt::AlignCenter);
-    m_radio_buttons_container->setLayout(radio_buttons_layout);
-    col_two_layout->addWidget(m_radio_buttons_container);
-    col_two_layout->addWidget(m_slider_group_two);
+    m_radio_buttons_layout->addWidget(m_r_normal, 1, Qt::AlignCenter);
+    m_radio_buttons_layout->addWidget(m_r_grayscale, 1, Qt::AlignCenter);
+    m_radio_buttons_layout->addWidget(m_r_fourier, 1, Qt::AlignCenter);
+    m_radio_buttons_container->setLayout(m_radio_buttons_layout);
+    m_col_two_layout->addWidget(m_radio_buttons_container);
+    m_col_two_layout->addWidget(m_slider_group_two);
 
-    col_two_layout->addWidget(m_b_add_to_results);
-    col_two_layout->addWidget(m_b_save_as);
+    m_col_two_layout->addWidget(m_b_add_to_results);
+    m_col_two_layout->addWidget(m_b_save_as);
 
-    m_layout->addLayout(col_two_layout);
+    m_layout->addLayout(m_col_two_layout);
     m_layout->setSpacing(0);
     setLayout(m_layout);
 }
 
 /**
  * @brief EditorPane::setupConnections
+ *
+ * A private convenience method for setting up the Qt SLOTS/SIGNAL connections.
+ *
  */
 void EditorPane::setupConnections()
 {
@@ -128,8 +148,15 @@ void EditorPane::setupConnections()
 
 /**
  * @brief EditorPane::detectLandmarks
- * @param img
- * @return
+ *
+ * A public method invoked by the ImageEditor class when the
+ * application-user presses the "Detect Landmarks" button.
+ *
+ * The ImageProcessor::getFacialFeatures(ImageContainer *img) is
+ * invoked to initiate the dlib shape_predictor routine.
+ *
+ * @param img a image to invoke the dlib shape_predictor routine on
+ * @return true if landmark detection was successful false otherwise
  */
 bool EditorPane::detectLandmarks(ImageContainer *img)
 {
@@ -141,7 +168,11 @@ bool EditorPane::detectLandmarks(ImageContainer *img)
 
 /**
  * @brief EditorPane::setMorphReady
- * @param ready
+ *
+ * A public method invoked by the ImageEditor class, signalling that
+ * reference one & reference two has been set.
+ *
+ * @param ready indicates if the morphing procedure is ready or not
  */
 void EditorPane::setMorphReady(bool ready)
 {
@@ -150,6 +181,16 @@ void EditorPane::setMorphReady(bool ready)
     }
 }
 
+/**
+ * @brief EditorPane::toggleFilters
+ *
+ * A public method invoked by the ImageEditor class, usually invoked
+ * when a morphed image has been produced to allow for application-user
+ * post-processing. Alternatively if the application-user decides to
+ * change the reference images, the post-processing sliders are turned off.
+ *
+ * @param on indicates if the filters should be turned on/off
+ */
 void EditorPane::toggleFilters(bool on)
 {
     m_slider_group_one->toggleSliders(HOMOGENEOUS, BILATERAL, on);
@@ -161,12 +202,27 @@ void EditorPane::toggleFilters(bool on)
     m_r_fourier->setEnabled(on);
 }
 
+/**
+ * @brief EditorPane::resetSliders
+ *
+ * A public method invoked byt he ImageEditor class, usually invoked
+ * when the morphed output has changed.
+ *
+ */
 void EditorPane::resetSliders()
 {
     m_slider_group_one->resetSliders(HOMOGENEOUS, BILATERAL);
     m_slider_group_two->resetSliders(0, 2);
 }
 
+
+/**
+ * @brief EditorPane::resetAll
+ *
+ * A public method used to reset all the GUI post-processing elements to their
+ * default values, convenient when the user chooses to start a new project.
+ *
+ */
 void EditorPane::resetAll()
 {
     m_slider_group_one->toggleSliders(ALPHA, BILATERAL, false);
@@ -182,6 +238,10 @@ void EditorPane::resetAll()
 
 /**
  * @brief EditorPane::m_morph_target_b_pressed
+ *
+ * A public Qt SLOT activated when the "Morph" button has been pressed.
+ * The method starts the morphImages routine described in the ImageProcessor class.
+ *
  */
 void EditorPane::m_morph_target_b_pressed()
 {
@@ -194,22 +254,13 @@ void EditorPane::m_morph_target_b_pressed()
 }
 
 /**
- * @brief EditorPane::smoothMorph
- * @param alpha
+ * @brief EditorPane::applyFilters
+ *
+ * A public Qt SLOT activated when a filter slider has been changed by the
+ * application-user applying the corresponding effects to the morphed result.
+ *
+ * @param img
  */
-void EditorPane::smoothMorph()
-{
-    if(!m_reference_one->hasImage()         ||
-       !m_reference_one->hasLandmarks()     ||
-       !m_reference_two->hasImage()         ||
-       !m_reference_two->hasLandmarks()) return;
-    m_image_processor->morphImages(m_reference_one,
-                                   m_reference_two,
-                                   m_target,
-                                   m_slider_group_one->getSliderValue(ALPHA));
-    smoothFilters();
-}
-
 void EditorPane::applyFilters(QImage &img) const
 {
     if(!m_target->hasImage()) return;
@@ -236,6 +287,36 @@ void EditorPane::applyFilters(QImage &img) const
                                    m_slider_group_one->getSlider(HOMOGENEOUS)->value());
 }
 
+/**
+ * @brief EditorPane::smoothMorph
+ *
+ * A private slot invoked when the application-user adjusts the alpha slider.
+ * The method invokes the morphImages routine of the ImageProcessor class and applies
+ * the filter-values indicated by the sliders.
+ *
+ */
+void EditorPane::smoothMorph()
+{
+    if(!m_reference_one->hasImage()         ||
+       !m_reference_one->hasLandmarks()     ||
+       !m_reference_two->hasImage()         ||
+       !m_reference_two->hasLandmarks()) return;
+    m_image_processor->morphImages(m_reference_one,
+                                   m_reference_two,
+                                   m_target,
+                                   m_slider_group_one->getSliderValue(ALPHA));
+    smoothFilters();
+}
+
+/**
+ * @brief EditorPane::smoothFilters
+ *
+ * A private slot invoked when the application-user adjusts after effects sliders.
+ * The method invokes the applyFilters(const QImage &img) method of this class. Futhermore
+ * the method checks whether the filters should be applied to the fourier, grayscale or normal
+ * transformed morphed result.
+ *
+ */
 void EditorPane::smoothFilters()
 {
     QImage img = m_target->getSource();
@@ -250,6 +331,14 @@ void EditorPane::smoothFilters()
     }
 }
 
+/**
+ * @brief EditorPane::m_r_normal_selected
+ *
+ * A private SLOT activated when the user selects the normal transformation
+ * radio button. The morphed result will be represented to the user without any
+ * post-processing transformations applied.
+ *
+ */
 void EditorPane::m_r_normal_selected()
 {
     if(m_r_normal->isChecked()) {
@@ -258,6 +347,13 @@ void EditorPane::m_r_normal_selected()
     }
 }
 
+/**
+ * @brief EditorPane::m_r_grayscale_selected
+ *
+ * A private SLOT activated when the user selects the grayscale transformation
+ * radio button. The morphed result will be represented to the user in grayscale.
+ *
+ */
 void EditorPane::m_r_grayscale_selected()
 {
     if(m_r_grayscale->isChecked()) {
@@ -266,6 +362,13 @@ void EditorPane::m_r_grayscale_selected()
     }
 }
 
+/**
+ * @brief EditorPane::m_r_fourier_selected
+ *
+ * A private SLOT activated when the user selects the fourier transformation
+ * radio button. The morphed result will be represented to the user in the frequency domain.
+ *
+ */
 void EditorPane::m_r_fourier_selected()
 {
     if(m_r_fourier->isChecked()) {
@@ -277,20 +380,34 @@ void EditorPane::m_r_fourier_selected()
     }
 }
 
+/**
+ * @brief EditorPane::m_b_add_to_results_pressed
+ *
+ * A private SLOT activated when the application-user presses the add to results button.
+ * The SLOT merely emits the addToResultsInvoked() SIGNAL, signalling the results preview
+ * to update accordingly.
+ *
+ */
 void EditorPane::m_b_add_to_results_pressed()
 {
     emit addToResultsInvoked(m_target);
 }
 
+/**
+ * @brief EditorPane::m_b_save_as_pressed
+ *
+ * A private SLOT activated when the application-user presses the save as button.
+ * A standardized procedure of saving the current morphed result initializes.
+ *
+ */
 void EditorPane::m_b_save_as_pressed()
 {
-    m_target->setSourceToTempSource();
     auto filename = QFileDialog::getSaveFileName(this,
                                                  tr("Save Image"),
                                                  m_target->getImageTitle(),
                                                  tr(".jpg"));
     if(filename.isEmpty()) return;
-    auto save_status = m_target->getSource().save(filename + ".jpg");
+    auto save_status = m_target->getTempSource().save(filename + ".jpg");
     if(save_status)
         Console::appendToConsole("Saved morph: " + filename + ".jpg");
     else Console::appendToConsole("Failed to save: " + filename + ".jpg");

@@ -1,20 +1,17 @@
 #pragma once
-
 #include <QMainWindow>
 
-#include <QMenu>
-#include <QAction>
-#include <QWidget>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-
+class QWidget;
+class QMenu;
+class QAction;
 class DatabasePreview;
 class ImageEditor;
 class ResultsPreview;
+class QHBoxLayout;
+class QVBoxLayout;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
     explicit MainWindow(QMainWindow * parent = nullptr);
     ~MainWindow() = default;

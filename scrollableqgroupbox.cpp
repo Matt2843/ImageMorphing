@@ -1,10 +1,16 @@
 #include "scrollableqgroupbox.h"
+#include <QDebug>
 
+#include <QWidget>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QScrollArea>
 
 /**
  * @brief ScrollableQGroupBox::ScrollableQGroupBox
- * The default ScrollableQGroupBox constructor
+ *
+ * The default ScrollableQGroupBox ctor
+ *
  * @param parent
  * @param title
  */
@@ -12,21 +18,35 @@ ScrollableQGroupBox::ScrollableQGroupBox(QWidget *parent, const QString &title, 
     QGroupBox(title, parent),
     m_content_pane(new QWidget(this)),
     m_scroll_area(new QScrollArea(this)),
-    m_layout(new QVBoxLayout())
+    m_layout(new QVBoxLayout)
 {
     setup(Orientation);
 }
 
 /**
+ * @brief ScrollableQGroupBox::~ScrollableQGroupBox
+ *
+ * The ScrollableQGroupBox destructor
+ *
+ */
+ScrollableQGroupBox::~ScrollableQGroupBox()
+{
+    for(const auto &data_point : m_container) {
+        delete data_point;
+    }
+}
+
+/**
  * @brief ScrollableQGroupBox::setup
- * An auxillary private class method to set up the internal
- * layout of this scrollable qgroupbox.
+ *
+ * A private convenience method for setting up the layout and internal widgets of this container.
+ *
  */
 void ScrollableQGroupBox::setup(Orientation orientation)
 {
     if(orientation == Orientation::Vertical)
-        m_content_pane_layout = new QVBoxLayout();
-    else m_content_pane_layout = new QHBoxLayout();
+        m_content_pane_layout = new QVBoxLayout;
+    else m_content_pane_layout = new QHBoxLayout;
     m_content_pane->setLayout(m_content_pane_layout);
     m_scroll_area->setWidget(m_content_pane);
     m_scroll_area->setWidgetResizable(true);
@@ -36,8 +56,10 @@ void ScrollableQGroupBox::setup(Orientation orientation)
 
 /**
  * @brief ScrollableQGroupBox::updatePreview
- * An auxillary protected class method to update the content_pane of this class
- * to be 1:1 withg the m_container (image database loaded).
+ *
+ * A protected class method to update the content_pane of this class
+ * to be 1:1 with the m_container (image database loaded).
+ *
  */
 void ScrollableQGroupBox::updatePreview()
 {
@@ -48,8 +70,9 @@ void ScrollableQGroupBox::updatePreview()
 
 /**
  * @brief ScrollableQGroupBox::clearContainerAndPreview
- * An auxillary protected class method to clear the m_container and
- * m_layout of this class.
+ *
+ * A public SLOT method to clear the m_container and m_layout of this class.
+ *
  */
 void ScrollableQGroupBox::clearContainerAndPreview()
 {

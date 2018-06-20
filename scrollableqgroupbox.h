@@ -4,22 +4,19 @@
 #include "imagecontainer.h"
 
 #include <unordered_set>
-
 #include <QString>
 #include <QLayout>
-#include <QWidget>
-#include <QStringList>
-#include <QScrollArea>
-#include <QVBoxLayout>
 
+class QWidget;
+class QScrollArea;
+class QVBoxLayout;
 class ScrollableQGroupBox : public QGroupBox
 {
     Q_OBJECT
-
 public:
     enum Orientation {Vertical, Horizontal};
     explicit ScrollableQGroupBox(QWidget * parent = nullptr, const QString & title = "", Orientation Orientation = Vertical);
-    ~ScrollableQGroupBox() = default;
+    virtual ~ScrollableQGroupBox();
 
 private:
     void setup(Orientation orientation);

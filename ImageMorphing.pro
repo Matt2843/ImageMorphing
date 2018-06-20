@@ -8,10 +8,10 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = ImageMorphing
+TARGET = fmg-qt
 TEMPLATE = app
 
-CONFIG += c++14
+CONFIG += c++14 console
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -36,7 +36,9 @@ SOURCES += \
         imageprocessor.cpp \
         labelledslidergroup.cpp \
         console.cpp \
-        morphdatabasedialog.cpp
+        morphdatabasedialog.cpp \
+        commandlinemorphing.cpp \
+    globals.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -49,7 +51,9 @@ HEADERS += \
         imageprocessor.h \
         labelledslidergroup.h \
         console.h \
-        morphdatabasedialog.h
+        morphdatabasedialog.h \
+        commandlinemorphing.h \
+    globals.h
 
 INCLUDEPATH += $$PWD/OpenBLAS/include
 LIBS += -L$$PWD/OpenBLAS/lib \
@@ -64,3 +68,5 @@ LIBS += -L$$PWD/opencv_build/x64/mingw/staticlib \
         -lopencv_imgproc341 \
         -lopencv_core341 \
         -lzlib
+
+

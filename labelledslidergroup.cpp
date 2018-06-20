@@ -1,21 +1,29 @@
 #include "labelledslidergroup.h"
-
 #include <QDebug>
+
+#include <QLabel>
+#include <QSlider>
 #include <QToolTip>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 /**
  * @brief LabelledSliderGroup::LabelledSliderGroup
- * The default labelledslidergroup constructor
- * @param texts
- * @param parent
+ *
+ * The LabelledSliderGroup ctor, constructs a group of QLabelled QSliders.
+ * The group aligns the sliders accroding to the Qt::Orientation parameter, which
+ * can either be Qt::Horizontal or Qt::Vertical.
+ *
+ * @param labels a list of labels
+ * @param parent the
  * @param orientation
  */
 LabelledSliderGroup::LabelledSliderGroup(const QStringList &labels,
-                                         QWidget *parent,
-                                         Qt::Orientation orientation) :
+                                         Qt::Orientation orientation,
+                                         QWidget *parent) :
     QWidget(parent),
     m_orientation(orientation),
-    m_layout(new QHBoxLayout()),
+    m_layout(new QHBoxLayout),
     m_label_layout(new QVBoxLayout),
     m_slider_layout(new QVBoxLayout)
 {
@@ -24,7 +32,10 @@ LabelledSliderGroup::LabelledSliderGroup(const QStringList &labels,
 
 /**
  * @brief LabelledSliderGroup::setup
- * @param texts
+ *
+ * A private convenience method for setting up the layout and internal widgets of this container.
+ *
+ * @param texts the list of labels the class was constructed with.
  */
 void LabelledSliderGroup::setup(const QStringList &labels)
 {
@@ -53,8 +64,12 @@ void LabelledSliderGroup::setup(const QStringList &labels)
 
 /**
  * @brief LabelledSliderGroup::setLabelText
- * @param text
- * @param which
+ *
+ * A public method to set the text of a specific slider label
+ *
+ * @param which the label to be changed
+ * @param text the input text
+ * @param flag the text alignment
  */
 void LabelledSliderGroup::setLabelText(unsigned long which, const QString &text, Qt::AlignmentFlag flag)
 {
@@ -64,29 +79,13 @@ void LabelledSliderGroup::setLabelText(unsigned long which, const QString &text,
 }
 
 /**
- * @brief LabelledSliderGroup::getSlider
- * @param which
- * @return
- */
-QSlider* LabelledSliderGroup::getSlider(unsigned long which)
-{
-    if(which >= m_sliders.size()) return nullptr;
-    return m_sliders[which];
-}
-
-/**
- * @brief LabelledSliderGroup::getSliderValue
- * @param which
- * @return
- */
-float LabelledSliderGroup::getSliderValue(unsigned long which)
-{
-    if(which >= m_sliders.size()) return 0.0;
-    return (float)m_sliders[which]->value() / 100;
-}
-
-/**
  * @brief LabelledSliderGroup::toggleSliders
+ *
+ * A public method to toggle sliders on/off
+ *
+ * @param from the start index
+ * @param to the end index
+ * @param on the toggle value
  */
 void LabelledSliderGroup::toggleSliders(unsigned long from, unsigned long to, bool on)
 {
@@ -95,6 +94,14 @@ void LabelledSliderGroup::toggleSliders(unsigned long from, unsigned long to, bo
     }
 }
 
+/**
+ * @brief LabelledSliderGroup::resetSliders
+ *
+ * A public method to set the value of a range of sliders to 0.
+ *
+ * @param from the start index
+ * @param to the end index
+ */
 void LabelledSliderGroup::resetSliders(unsigned long from, unsigned long to)
 {
     for(unsigned int i = from; i <= to; ++i) {
@@ -104,8 +111,11 @@ void LabelledSliderGroup::resetSliders(unsigned long from, unsigned long to)
 
 /**
  * @brief LabelledSliderGroup::setSliderToolTip
- * @param s
- * @param val
+ *
+ * A private SLOT invoked when the slider is moved, to update its tooltip accordingly
+ *
+ * @param val the value the slider changed to
+ * @param which the slider in question
  */
 void LabelledSliderGroup::setSliderToolTip(int val, unsigned long which)
 {
@@ -114,9 +124,27 @@ void LabelledSliderGroup::setSliderToolTip(int val, unsigned long which)
     QToolTip::showText(QCursor::pos(), QString::number(val), m_sliders[which]);
 }
 
+/**
+ * @brief LabelledSliderGroup::getSlider
+ * @param which the slider to be returned
+ * @return m_sliders[which]
+ */
+QSlider* LabelledSliderGroup::getSlider(unsigned long which)
+{
+    if(which >= m_sliders.size()) return nullptr;
+    return m_sliders[which];
+}
 
-
-
-
-
-
+/**
+ * @brief LabelledSliderGroup::getSliderValue
+ *
+ * A convenience method to get the floating value range [0;1] of a slider
+ *
+ * @param which the slider to be evaluated
+ * @return the floating value of the slider
+ */
+float LabelledSliderGroup::getSliderValue(unsigned long which)
+{
+    if(which >= m_sliders.size()) return 0.0;
+    return (float)m_sliders[which]->value() / 100;
+}

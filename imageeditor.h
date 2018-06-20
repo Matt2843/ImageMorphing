@@ -1,17 +1,13 @@
 #pragma once
 #include <QGroupBox>
 
-#include "editorpane.h"
-#include "imagecontainer.h"
-#include "console.h"
-
-#include <string>
-
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-
+class EditorPane;
+class ImageContainer;
+class Console;
+class QLabel;
+class QVBoxLayout;
+class QHBoxLayout;
+class QPushButton;
 class ImageEditor : public QGroupBox
 {
     Q_OBJECT
@@ -24,16 +20,7 @@ private:
     void setup();
     void setupConnections();
 
-private slots:
-    void morphPressed();
-    void detectLandmarksRefOne();
-    void detectLandmarksRefTwo();
-    void toggleLandmarksTarget();
-    void toggleLandmarksRefOne();
-    void toggleLandmarksRefTwo();
-
 public:
-    void testMorphConditions();
     void setReferenceOne(ImageContainer *ref_one);
     void setReferenceTwo(ImageContainer *ref_two);
 
@@ -41,6 +28,17 @@ public slots:
     void attemptToSetReferenceByDoubleClick(ImageContainer *img);
     void attemptToSetReference(ImageContainer *img, int number);
     void resetAll();
+
+private slots:
+    void morphPressed();
+    void detectLandmarksRefOne();
+    void detectLandmarksRefTwo();
+    void toggleLandmarksRefOne();
+    void toggleLandmarksRefTwo();
+    void toggleLandmarksTarget();
+
+private:
+    void testMorphConditions();
 
 public:
     EditorPane* getEditorPane();

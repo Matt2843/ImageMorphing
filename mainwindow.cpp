@@ -1,27 +1,34 @@
 #include "mainwindow.h"
+#include <QDebug>
 
 #include "morphdatabasedialog.h"
 #include "databasepreview.h"
 #include "imageeditor.h"
+#include "editorpane.h"
 #include "resultspreview.h"
 
-#include <QDebug>
+#include <QMenu>
 #include <QMenuBar>
+#include <QAction>
 #include <QScreen>
+#include <QWidget>
 #include <QApplication>
 #include <QGuiApplication>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 /**
  * @brief MainWindow::MainWindow
- * Default constructor of the MainWindow class
- * initialises a content pane widget and a
- * vertical box layout.
+ *
+ * The MainWindow ctor, constructing the DatabasePreview,
+ * ImageEditor and ResultsPreview.
+ *
  * @param parent
  */
 MainWindow::MainWindow(QMainWindow *parent) :
     QMainWindow(parent),
     m_content_pane(new QWidget(this)),
-    m_layout(new QHBoxLayout()),
+    m_layout(new QHBoxLayout),
     m_second_layout(new QVBoxLayout()),
     m_database_preview(new DatabasePreview(this)),
     m_image_editor(new ImageEditor(this)),
@@ -35,8 +42,9 @@ MainWindow::MainWindow(QMainWindow *parent) :
 
 /**
  * @brief MainWindow::setup
- * An auxillary private method to
- * set up the main-window internal properties
+ *
+ * A private convenience method for setting up the layout and internal widgets of this container.
+ *
  */
 void MainWindow::setup()
 {
@@ -52,8 +60,9 @@ void MainWindow::setup()
 
 /**
  * @brief MainWindow::setupConnections
- * An auxillary private method to set-up the internal
- * Qt conneciton properties.
+ *
+ * A private convenience method for setting up the Qt SLOTS/SIGNAL connections.
+ *
  */
 void MainWindow::setupConnections()
 {
@@ -73,7 +82,9 @@ void MainWindow::setupConnections()
 
 /**
  * @brief MainWindow::createActions
- * An auxillary private mathod to initialize the menu actions.
+ *
+ * An private class method to initialize the various menu actions.
+ *
  */
 void MainWindow::createActions()
 {
@@ -110,6 +121,12 @@ void MainWindow::createActions()
     connect(a_about, &QAction::triggered, this, &MainWindow::about);
 }
 
+/**
+ * @brief MainWindow::createMenus
+ *
+ * A private class method to create the menus contained in the menubar
+ *
+ */
 void MainWindow::createMenus()
 {
     file_menu = menuBar()->addMenu(tr("&File"));
@@ -129,6 +146,12 @@ void MainWindow::createMenus()
     help_menu->addAction(a_about);
 }
 
+/**
+ * @brief MainWindow::newProject
+ *
+ * The SLOT invoked when the application-user activates the new project menu action.
+ *
+ */
 void MainWindow::newProject()
 {
     m_database_preview->clearContainerAndPreview();
@@ -136,33 +159,69 @@ void MainWindow::newProject()
     m_image_editor->resetAll();
 }
 
+/**
+ * @brief MainWindow::loadDatabaseFromDirectory
+ *
+ * The SLOT invoked when the application-user activates load database (dir) menu action.
+ *
+ */
 void MainWindow::loadDatabaseFromDirectory()
 {
     m_database_preview->loadDatabaseFromDirectory();
 }
 
+/**
+ * @brief MainWindow::loadDatabaseFromFiles
+ *
+ * The SLOT invoked when the application-user activates the load database (files) menu action.
+ *
+ */
 void MainWindow::loadDatabaseFromFiles()
 {
     m_database_preview->loadDatabaseFromFiles();
 }
 
+/**
+ * @brief MainWindow::exportResults
+ *
+ * The SLOT invoked when the application-user activates the export results menu action.
+ *
+ */
 void MainWindow::exportResults()
 {
     m_results_preview->exportResults("jpg");
 }
 
+/**
+ * @brief MainWindow::exit
+ *
+ * The SLOT invoked when the application-user activates the exit menu action.
+ *
+ */
 void MainWindow::exit()
 {
     QApplication::instance()->quit();
 }
 
+/**
+ * @brief MainWindow::generateMorphDatabase
+ *
+ * The SLOT invoked when the application-user activates the generate morph database menu action.
+ *
+ */
 void MainWindow::generateMorphDatabase()
 {
     MorphDatabaseDialog d;
     d.exec();
 }
 
+/**
+ * @brief MainWindow::about
+ *
+ * The SLOT invoked when the application-user activates the about menu action.
+ *
+ */
 void MainWindow::about()
 {
-    qDebug() << "about pressed";
+    //TODO: implement
 }

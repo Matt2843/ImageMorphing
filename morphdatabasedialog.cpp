@@ -1,17 +1,41 @@
 #include "morphdatabasedialog.h"
+#include <QDebug>
 
 #include "databasepreview.h"
+#include "globals.h"
+
+#include "imagecontainer.h"
+#include "labelledslidergroup.h"
 
 #include <cstdlib>
 
-#include <QFileDialog>
 #include <QProgressDialog>
 #include <QApplication>
 #include <QDirIterator>
-#include <QDir>
+#include <QButtonGroup>
+#include <QFileDialog>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QRadioButton>
+#include <QPushButton>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QSlider>
 #include <QThread>
-#include <QDebug>
+#include <QLabel>
+#include <QDir>
 
+/**
+ * @brief MorphDatabaseDialog::MorphDatabaseDialog
+ *
+ * The MorphDatabaseDialog ctor, constructing the GUI container for the alternative
+ * application view. The database dialog guides the user through applying the implemented
+ * morphing techniques to an entire database.
+ *
+ * @param parent
+ * @param preview
+ */
 MorphDatabaseDialog::MorphDatabaseDialog(QWidget *parent, ImageContainer *preview) :
     QDialog(parent),
     m_grayscale(false),
@@ -20,7 +44,6 @@ MorphDatabaseDialog::MorphDatabaseDialog(QWidget *parent, ImageContainer *previe
     m_jpeg_format(true),
     m_layout(new QVBoxLayout(this)),
     m_one(new ImageContainer),
-    m_preview(new ImageContainer),
     m_two(new ImageContainer),
     m_preview_label(new QLabel("<u>Preview</u>", this)),
     m_in_dir_layout(new QHBoxLayout),
@@ -59,21 +82,11 @@ MorphDatabaseDialog::MorphDatabaseDialog(QWidget *parent, ImageContainer *previe
     setupConnections();
 }
 
-MorphDatabaseDialog::~MorphDatabaseDialog()
-{
-    delete m_one;
-    delete m_preview;
-    delete m_two;
-    delete m_in_dir_layout;
-    delete m_out_dir_layout;
-    delete m_resolution_layout;
-    delete m_radio_buttons_layout;
-    delete m_bad_morphs_layout;
-    delete m_buttons_layout;
-}
-
 /**
  * @brief MorphDatabaseDialog::setup
+ *
+ * A private convenience method for setting up the layout and internal widgets of this container.
+ *
  */
 void MorphDatabaseDialog::setup()
 {
@@ -109,7 +122,7 @@ void MorphDatabaseDialog::setup()
                     "Gaussian Filter" << "Median Filter" <<
                     "Bilateral Filter" << "Sharpness" <<
                     "Contrast" << "Brightness";
-    m_sliders = new LabelledSliderGroup(slider_names, this);
+    m_sliders = new LabelledSliderGroup(slider_names, Qt::Horizontal, this);
     m_sliders->getSlider(ALPHA)->setValue(50);
     m_layout->addWidget(m_sliders);
 
@@ -145,6 +158,12 @@ void MorphDatabaseDialog::setup()
     setLayout(m_layout);
 }
 
+/**
+ * @brief MorphDatabaseDialog::setupConnections
+ *
+ * A private convenience method for setting up the Qt SLOTS/SIGNAL connections.
+ *
+ */
 void MorphDatabaseDialog::setupConnections()
 {
     connect(m_browse_in_dir, SIGNAL(released()),
@@ -198,6 +217,14 @@ void MorphDatabaseDialog::setupConnections()
             [&](){m_remove_bad_morphs = !m_remove_bad_morphs;});
 }
 
+/**
+ * @brief MorphDatabaseDialog::createPreview
+ *
+ * A private class method to create a convenient ImageContainer preview of how
+ * the morphed results will look like after the application of the chosen after
+ * effects.
+ *
+ */
 void MorphDatabaseDialog::createPreview()
 {
     QProgressDialog diag("Searching for a proper preview", "Abort", 0, m_database.size(), this);
@@ -225,7 +252,10 @@ void MorphDatabaseDialog::createPreview()
 
 /**
  * @brief MorphDatabaseDialog::applyFilters
- * @param img
+ *
+ * A pricate convenience method to apply the specified filter values to a QImage reference.
+ *
+ * @param img the image the filters are applied to
  */
 void MorphDatabaseDialog::applyFilters(QImage &img)
 {
@@ -253,6 +283,15 @@ void MorphDatabaseDialog::applyFilters(QImage &img)
                                   m_sliders->getSlider(HOMOGENEOUS)->value());
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_browse_in_dir_pressed
+ *
+ * A private SLOT invoked when the user invokes the browse input directory action.
+ *
+ * This SLOT invokes a load-directory routine, which loads copies of scaled image sources
+ * into the application used as targets for the morphing routine.
+ *
+ */
 void MorphDatabaseDialog::m_browse_in_dir_pressed()
 {
     QString directory_path = QFileDialog::getExistingDirectory(this,
@@ -286,14 +325,13 @@ void MorphDatabaseDialog::m_browse_in_dir_pressed()
         heights.push_back(img.height());
     }
 
+    fmg::Globals::img_width = (int)(*std::min_element(widths.begin(), widths.end()));
+    fmg::Globals::img_height = (int)(*std::min_element(heights.begin(), heights.end()));
+
     if(image_paths.size() <= 2) return;
 
-    DatabasePreview::m_image_width = (int)(*std::min_element(widths.begin(), widths.end()));
-    DatabasePreview::m_image_height = (int)(*std::min_element(heights.begin(), heights.end()));
-    m_width_edit->setText(QString::number(DatabasePreview::m_image_width));
-    m_height_edit->setText(QString::number(DatabasePreview::m_image_height));
-
-
+    m_width_edit->setText(QString::number(fmg::Globals::img_width));
+    m_height_edit->setText(QString::number(fmg::Globals::img_height));
 
     QProgressDialog diag("Loading files...", "Abort", 0, directory.count(), this);
     diag.setWindowModality(Qt::WindowModal);
@@ -314,6 +352,12 @@ void MorphDatabaseDialog::m_browse_in_dir_pressed()
     m_landmarks_detected = false;
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_browse_out_dir_pressed
+ *
+ * A private SLOT invoked when the user invokes the browse output directory action.
+ *
+ */
 void MorphDatabaseDialog::m_browse_out_dir_pressed()
 {
     QString directory_path = QFileDialog::getExistingDirectory(this,
@@ -326,6 +370,12 @@ void MorphDatabaseDialog::m_browse_out_dir_pressed()
     if(!m_in_dir_text->text().isEmpty() && !m_out_dir_text->text().isEmpty()) m_b_create_database->setEnabled(true);
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_r_normal_selected
+ *
+ * A private SLOT invoked when the normal transformation radio button is selected.
+ *
+ */
 void MorphDatabaseDialog::m_r_normal_selected()
 {
     if(m_r_normal->isChecked()) {
@@ -336,6 +386,12 @@ void MorphDatabaseDialog::m_r_normal_selected()
     }
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_r_grayscale_selected
+ *
+ * A private SLOT invoked when the grayscale transformation radio button is selected.
+ *
+ */
 void MorphDatabaseDialog::m_r_grayscale_selected()
 {
     if(m_r_grayscale->isChecked()) {
@@ -344,6 +400,16 @@ void MorphDatabaseDialog::m_r_grayscale_selected()
     }
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_b_create_database_pressed
+ *
+ * A private SLOT invoked when the create database button is pressed.
+ *
+ * This SLOT invokes the routine of morphing the images of the input-directory
+ * and creates a database of morphed images with post-processed effects applied
+ * according to the values selected by the application-user.
+ *
+ */
 void MorphDatabaseDialog::m_b_create_database_pressed()
 {
     if(!QDir(m_out_dir_text->text()).exists()) return; // the directory does not exist.
@@ -358,7 +424,6 @@ void MorphDatabaseDialog::m_b_create_database_pressed()
             if(img->hasLandmarks()) continue;
             img->setLandmarks(m_image_processor.getFacialFeatures(img));
         }
-        landmarks_diag.setValue(m_database.size());
         if(!landmarks_diag.wasCanceled()) m_landmarks_detected = true;
     }
 
@@ -398,6 +463,12 @@ void MorphDatabaseDialog::m_b_create_database_pressed()
 
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_alpha_changed
+ *
+ * A private SLOT invoked when the alpha slider is moved by the application-user.
+ *
+ */
 void MorphDatabaseDialog::m_alpha_changed()
 {
     m_image_processor.morphImages(m_one, m_two, m_preview,
@@ -405,6 +476,12 @@ void MorphDatabaseDialog::m_alpha_changed()
     m_slider_changed();
 }
 
+/**
+ * @brief MorphDatabaseDialog::m_slider_changed
+ *
+ * A private SLOT invoked when a filter slider is moved by the application-user.
+ *
+ */
 void MorphDatabaseDialog::m_slider_changed()
 {
     QImage img = m_preview->getSource();
