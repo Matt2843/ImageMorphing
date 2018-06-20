@@ -22,7 +22,7 @@ class MorphDatabaseDialog : public QDialog
     Q_OBJECT
 public:
     MorphDatabaseDialog(QWidget *parent = nullptr, ImageContainer *preview = nullptr);
-    ~MorphDatabaseDialog() = default;
+    ~MorphDatabaseDialog();
 
 private:
     void setup();

@@ -83,6 +83,18 @@ MorphDatabaseDialog::MorphDatabaseDialog(QWidget *parent, ImageContainer *previe
 }
 
 /**
+ * @brief MorphDatabaseDialog::~MorphDatabaseDialog
+ *
+ * The MorphDatabaseDialog destructor
+ *
+ */
+MorphDatabaseDialog::~MorphDatabaseDialog()
+{
+    for(ImageContainer *img : m_database) delete img;
+    m_database.clear();
+}
+
+/**
  * @brief MorphDatabaseDialog::setup
  *
  * A private convenience method for setting up the layout and internal widgets of this container.
@@ -446,21 +458,13 @@ void MorphDatabaseDialog::m_b_create_database_pressed()
             target.setImage(img);
             QString format = m_jpeg_format ? ".jpg" : ".png";
             if(m_grayscale) {
-                m_preview->setImage(img.convertToFormat(QImage::Format_Grayscale8));
                 target.getGrayscaleSource().save(m_out_dir_text->text() + "/" + "g_" + target.getImageTitle() + target.getId() + format);
             } else {
-                m_preview->setImage(img);
                 target.getTempSource().save(m_out_dir_text->text() + "/" + target.getImageTitle() + target.getId() + format);
             }
         }
     }
     diag.setValue(m_database.size());
-    QImage img = m_preview->getSource();
-    applyFilters(img);
-    if(m_grayscale)
-        m_preview->setImage(img.convertToFormat(QImage::Format_Grayscale8));
-    else m_preview->setImage(img);
-
 }
 
 /**
