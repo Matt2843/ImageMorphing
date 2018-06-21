@@ -257,15 +257,15 @@ void ImageContainer::generateLandmarkImage()
 
     painter.setPen(pen);
     painter.drawImage(QRect(0, 0, res.width(), res.height()), m_source, QRect(0, 0, res.width(), res.height()));
+    int i = 0;
     for(const QPoint & landmark : m_landmarks) {
         pen.setColor(Qt::blue);
-        pen.setWidth(1);
-        painter.setPen(pen);
-        painter.drawEllipse(landmark, 5, 5);
-        pen.setColor(Qt::red);
-        pen.setWidth(2);
+        pen.setWidth(3);
         painter.setPen(pen);
         painter.drawPoint(landmark);
+        pen.setColor(Qt::red);
+        painter.setPen(pen);
+        painter.drawText(landmark, QString::number(++i));
     }
     m_landmark_image = res;
 }

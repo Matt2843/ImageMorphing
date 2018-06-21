@@ -3,7 +3,7 @@
 
 #include "databasepreview.h"
 #include "globals.h"
-
+#include "console.h"
 #include "imagecontainer.h"
 #include "labelledslidergroup.h"
 
@@ -241,25 +241,29 @@ void MorphDatabaseDialog::createPreview()
 {
     QProgressDialog diag("Searching for a proper preview", "Abort", 0, m_database.size(), this);
     diag.setWindowModality(Qt::WindowModal);
-    bool found_one = false;
-    bool found_two = false;
-    int count = 0;
-    while(!found_one  || !found_two) {
+    for(auto it = m_database.begin(); it != m_database.end(); ++it) {
         QApplication::processEvents();
         diag.setValue(diag.value() + 1);
-        m_one = m_database[rand() % m_database.size()];
-        m_two = m_database[rand() % m_database.size()];
-        if(!found_one)
-            m_one->setLandmarks(m_image_processor.getFacialFeatures(m_one));
-        if(!m_one->hasBadLandmarks()) found_one = true;
-        if(!found_two)
-            m_two->setLandmarks(m_image_processor.getFacialFeatures(m_two));
-        if(!m_two->hasBadLandmarks()) found_two = true;
-        if(++count == 10) break;
+        m_one = *it;
+        m_one->setLandmarks(m_image_processor.getFacialFeatures(m_one));
+        if(!m_one->hasBadLandmarks()) break;
+    }
+    for(auto it = m_database.end() - 1; it != m_database.begin(); --it) {
+        QApplication::processEvents();
+        diag.setValue(diag.value() + 1);
+        if(*it == m_one) continue;
+        m_two = *it;
+        m_two->setLandmarks(m_image_processor.getFacialFeatures(m_two));
+        if(!m_two->hasBadLandmarks()) break;
     }
     diag.setValue(m_database.size());
-    if(count != 10)
+    if(!m_one->hasBadLandmarks() && !m_two->hasBadLandmarks())
         m_image_processor.morphImages(m_one, m_two, m_preview, 0.5);
+    else {
+        if(fmg::Globals::gui) {
+            Console::appendToConsole("Unable to find a proper preview with the database provided.");
+        }
+    }
 }
 
 /**

@@ -12,8 +12,10 @@
 #include <QAction>
 #include <QScreen>
 #include <QWidget>
+#include <QDialog>
 #include <QApplication>
 #include <QGuiApplication>
+#include <QPushButton>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
@@ -157,6 +159,7 @@ void MainWindow::newProject()
     m_database_preview->clearContainerAndPreview();
     m_results_preview->clearContainerAndPreview();
     m_image_editor->resetAll();
+    a_exportResults->setEnabled(false);
 }
 
 /**
@@ -189,7 +192,7 @@ void MainWindow::loadDatabaseFromFiles()
  */
 void MainWindow::exportResults()
 {
-    m_results_preview->exportResults("jpg");
+    m_results_preview->exportResults();
 }
 
 /**
@@ -223,5 +226,17 @@ void MainWindow::generateMorphDatabase()
  */
 void MainWindow::about()
 {
-    //TODO: implement
+    QDialog about;
+    QVBoxLayout layout;
+    QLabel text;
+    text.setText("A Face Morph Generator created as a part of the\n"
+                 "02238 - Biometric Systems course at DTU, the fmg-qt\n"
+                 "application is on a proof-of-concept basis.\n\n"
+                 "Author: Mathias Henriksen s134532@student.dtu.dk");
+    layout.addWidget(&text);
+    QPushButton ok("Ok");
+    layout.addWidget(&ok);
+    connect(&ok, &QPushButton::released, &about, &QDialog::close);
+    about.setLayout(&layout);
+    about.exec();
 }

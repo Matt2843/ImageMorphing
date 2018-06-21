@@ -16,5 +16,5 @@ signals:
 public slots:
     void addMorphResult(ImageContainer*);
     void removeMorphResult(ImageContainer *img, QMouseEvent *event);
-    void exportResults(const char *format);
+    void exportResults();
 };

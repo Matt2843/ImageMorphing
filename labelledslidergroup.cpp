@@ -35,7 +35,7 @@ LabelledSliderGroup::LabelledSliderGroup(const QStringList &labels,
  *
  * A private convenience method for setting up the layout and internal widgets of this container.
  *
- * @param texts the list of labels the class was constructed with.
+ * @param labels the list of labels the class was constructed with.
  */
 void LabelledSliderGroup::setup(const QStringList &labels)
 {

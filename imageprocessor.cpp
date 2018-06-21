@@ -24,7 +24,7 @@
  * https://www.semanticscholar.org/paper/One-millisecond-face-alignment-with-an-ensemble-of-Kazemi-Sullivan/1824b1ccace464ba275ccc86619feaa89018c0ad
  * https://github.com/davisking/dlib-models
  *
- * @param parent
+ * @param parent the Qt widgets parent
  */
 ImageProcessor::ImageProcessor(QWidget *parent)
     : QWidget(parent)
@@ -45,8 +45,8 @@ ImageProcessor::ImageProcessor(QWidget *parent)
  * Furthermore for future extension https://github.com/nenadmarkus/pico/ would dramatically increase the face
  * detection procedure.
  *
- * @param img_path
- * @return
+ * @param image the ImageContainer to perform facial feature extraction on
+ * @return a std::vector<QPoint> containing the extracted facial features
  */
 std::vector<QPoint> ImageProcessor::getFacialFeatures(ImageContainer *image)
 {

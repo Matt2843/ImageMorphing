@@ -7,6 +7,8 @@
 #include <QAction>
 #include <QFileDialog>
 #include <QMouseEvent>
+#include <QPushButton>
+#include <QDialog>
 
 /**
  * @brief ResultsPreview::ResultsPreview
@@ -68,14 +70,31 @@ void ResultsPreview::removeMorphResult(ImageContainer *img, QMouseEvent *event)
  * The procedure exports all contained results to a directory selected by the application-user and
  * saves the results according to the const char *format input parameter.
  *
- * @param format ".png" or ".jpg"
  */
-void ResultsPreview::exportResults(const char *format)
+void ResultsPreview::exportResults()
 {
     auto directory_path = QFileDialog::getExistingDirectory(this,
                                                             tr("Select Database"),
                                                             "",
                                                             QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QDialog jpg_png_diag;
+    const char *format = "jpg";
+
+    QVBoxLayout o_layout;
+    QHBoxLayout i_layout;
+    QLabel choice("Please choose a format:");
+    QPushButton png("png");
+    QPushButton jpg("jpg");
+    i_layout.addWidget(&png);
+    i_layout.addWidget(&jpg);
+    o_layout.addWidget(&choice);
+    o_layout.addLayout(&i_layout);
+    jpg_png_diag.setLayout(&o_layout);
+    connect(&png, &QPushButton::released, [&format](){format = "png";});
+    connect(&jpg, &QPushButton::released, [&format](){format = "jpg";});
+    connect(&png, &QPushButton::released, &jpg_png_diag, &QDialog::close);
+    connect(&jpg, &QPushButton::released, &jpg_png_diag, &QDialog::close);
+    jpg_png_diag.exec();
     for(auto &result : m_container) {
         QString path = directory_path + "/" + result->getImageTitle() + "_" + result->getId() + "." + format;
         Console::appendToConsole("Saving: " + path);

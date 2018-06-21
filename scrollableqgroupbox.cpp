@@ -11,16 +11,17 @@
  *
  * The default ScrollableQGroupBox ctor
  *
- * @param parent
- * @param title
+ * @param parent the Qt widgets parent
+ * @param title the title of the QGroupBox
+ * @param orientation the Orientation in which ImageContainers should be added to this container
  */
-ScrollableQGroupBox::ScrollableQGroupBox(QWidget *parent, const QString &title, Orientation Orientation) :
+ScrollableQGroupBox::ScrollableQGroupBox(QWidget *parent, const QString &title, Orientation orientation) :
     QGroupBox(title, parent),
     m_content_pane(new QWidget(this)),
     m_scroll_area(new QScrollArea(this)),
     m_layout(new QVBoxLayout)
 {
-    setup(Orientation);
+    setup(orientation);
 }
 
 /**

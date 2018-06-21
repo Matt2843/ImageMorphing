@@ -17,8 +17,9 @@ int main(int argc, char *argv[])
     std::unique_ptr<MainWindow> gui;
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Face Morph Generation tool, to automate the morphing process of a directory of images.\nBest results "
-                                     "produced with images containing all 68 dlib landmarks with a similar pose and background.");
+    parser.setApplicationDescription("Face Morph Generation tool, to automate the morphing process of a directory of images.\n A json file can"
+                                     "be added to specify post-processing effects such as brightness / contrast increase or gaussian / bilateral"
+                                     "filtering.");
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -45,6 +46,7 @@ int main(int argc, char *argv[])
     if(parser.isSet(guiOption) || argc == 1) {
         fmg::Globals::gui = true;
         gui = std::make_unique<MainWindow>(nullptr);
+        gui->setStyleSheet("QMainWindow {background: 'white';}");
         gui->show();
     } else if(parser.isSet(inputDirectoryOption) && parser.isSet(outputDirectoryOption) && !parser.isSet(settingsOption)) { // default morphing procedure
         CommandLineMorphing(parser.value(inputDirectoryOption), parser.value(outputDirectoryOption));
