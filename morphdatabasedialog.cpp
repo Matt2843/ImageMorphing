@@ -74,7 +74,7 @@ MorphDatabaseDialog::MorphDatabaseDialog(QWidget *parent, ImageContainer *previe
     m_cb_remove_bad_morphs(new QCheckBox(this)),
     m_buttons_layout(new QHBoxLayout),
     m_b_create_database(new QPushButton("Create Database", this)),
-    m_b_cancel(new QPushButton("Cancel", this))
+    m_b_cancel(new QPushButton("Close", this))
 {
     if(preview != nullptr)
         m_preview->update(preview);
@@ -469,6 +469,17 @@ void MorphDatabaseDialog::m_b_create_database_pressed()
         }
     }
     diag.setValue(m_database.size());
+    Console::appendToConsole("Succesfully created morph-database: " + m_out_dir_text->text());
+    QDialog about;
+    QVBoxLayout layout;
+    QLabel text;
+    text.setText("Succesfully created morph-database:\n" + m_out_dir_text->text());
+    layout.addWidget(&text);
+    QPushButton ok("Ok");
+    layout.addWidget(&ok);
+    connect(&ok, &QPushButton::released, &about, &QDialog::close);
+    about.setLayout(&layout);
+    about.exec();
 }
 
 /**

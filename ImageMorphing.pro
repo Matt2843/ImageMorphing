@@ -38,7 +38,7 @@ SOURCES += \
         console.cpp \
         morphdatabasedialog.cpp \
         commandlinemorphing.cpp \
-    globals.cpp
+        globals.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -53,7 +53,7 @@ HEADERS += \
         console.h \
         morphdatabasedialog.h \
         commandlinemorphing.h \
-    globals.h
+        globals.h
 
 INCLUDEPATH += $$PWD/OpenBLAS/include
 LIBS += -L$$PWD/OpenBLAS/lib \
